@@ -20,6 +20,8 @@ Die Untersuchung führen wir mit den Methoden des Text Minings - z.B. Term-Häuf
 
 ##### 1 Woche vor der Wahl [08.September - 15.September](17_09.md)
 
+##### TV Duell [09. September](TVDuell.md)
+
 ## Die Analyse erfolgt in den folgenden schritten:
 
 ### 1. Von welchen Plattformen werden die meisten Tweets gesendet?
