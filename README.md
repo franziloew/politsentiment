@@ -1,11 +1,24 @@
 # Politische Stimmung im Social Web
 
 Mit Hilfe der Twitter - API sammeln wir Tweets, die mindestens eine der folgenden Parteien nennen: CDU/CSU, SPD, FDP, Bündnis90/Die Grünen\*, DIE LINKE, AfD.
+
 agalea91 gibt eine umfangreiche Anleitung für einen scrape-code. [Hier](https://github.com/agalea91/twitter_search) gehts zu seinem repository.
 
 Im Focus unserer Analyse stehen sowohl die Quantität der Tweets zu den einzelnen Parteien als auch deren jeweilige Tonalität. Wird also eine Partei häufig bei Twitter kommentiert? Und steht der Tweet eher in einem positiven oder negativen Kontext? Und welche Wörter werden am häufigsten in den Tweets genannt. Ebenso erstellen wir einen Index über die Tonalität der Tweets und vergleichen somit die Stimmung zu den Parteien im Social Web.
 
 Die Untersuchung führen wir mit den Methoden des Text Minings - z.B. Term-Häufigkeit oder Sentiment Analyse - mithilfe der Statistik Software R durch.
+
+## Analysen
+
+### Bundestagswahl 2017
+
+##### Nach der Wahl [26.September - 29.September](15_30.md)
+
+##### Wahltag [24.September](election.md)
+
+##### Kurz vor der Wahl [18.September - 23.September](18_23_09.md)
+
+##### 1 Woche vor der Wahl [08.September - 15.September](17_09.md)
 
 ## Die Analyse erfolgt in den folgenden schritten:
 
@@ -65,15 +78,5 @@ Für jedes Wort im Text:
   Gebe die Summenwerte pro Sentiment (z.b. negativ, positiv)
 
 Wir verwenden das Lexikon der [Leipzig Corpora Collection](http://wortschatz.uni-leipzig.de/de/download).
-
-## Analysen
-
-### Bundestagswahl 2017
-
-[Tweets 24.September (Wahltag)](election.md)
-
-[Tweets 18.September - 23.September](18_23_09.md)
-
-[Tweets 08.September - 15.September](17_09.md)
 
 \* Leider gibt es Probleme bei der Datengenerierung für Die Grünen, weshalb diese bei der einigen Analysen nicht beachtet werden können.
