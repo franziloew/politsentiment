@@ -28,8 +28,8 @@ Anzahl gesamter Tweets:
 
 ![](TVDuell_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-11-1.png)
 
-1. Wer retweeted wen?
----------------------
+## 1. Wer retweeted wen?
+
 
 ![](TVDuell_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-12-1.png)
 
@@ -140,19 +140,7 @@ BÜNDNIS90/DIE GRÜNEN
 </tbody>
 </table>
 <!--/html_preserve-->
-2. Über wen wird am meisten getweeted?
---------------------------------------
-
-``` r
-tweets %>%
-  group_by(candidate) %>%
-  tally(sort = TRUE)%>%
-  ggplot(aes(reorder(candidate,n), (n/nrow(tweets)))) +
-  xlab("") +
-  ylab("%Anteil der Tweets") +
-  geom_col(fill = c("red2","black"), alpha = .8) +
-  coord_flip()
-```
+## 2. Über wen wird am meisten getweeted?
 
 ![](TVDuell_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-15-1.png)
 
@@ -190,8 +178,7 @@ Anzahl gesamter Tweets:
 <!--/html_preserve-->
 ![](TVDuell_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-19-1.png)
 
-4. Wordclouds
--------------
+## 4. Wordclouds
 
 #### Nachrichtendienste
 
@@ -201,8 +188,7 @@ Anzahl gesamter Tweets:
 
 ![](TVDuell_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-21-1.png)
 
-5. term frequency - inverse document frequency (tf-idf)
--------------------------------------------------------
+## 5. term frequency - inverse document frequency (tf-idf)
 
 #### Nachrichtendienste
 
@@ -212,8 +198,7 @@ Anzahl gesamter Tweets:
 
 ![](TVDuell_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-24-1.png)
 
-6. Sentiment Analyse
---------------------
+## 6. Sentiment Analyse
 
 #### Nachrichtenportale
 
