@@ -1,0 +1,760 @@
+---
+title: "Politische Stimmung im Social Web vor der Bundestagswahl 2017"
+#author: "Franziska Löw"
+date: "`r format(Sys.Date())`"
+output: github_document
+---
+ 
+```{r, include=FALSE}
+# load the packages
+libs <- c("feather", "tidytext","tidyr","readr","lubridate","tm","stm",
+          "plyr","dplyr","class","knitr","kableExtra","cldr",'network', 'sna', 'qdap',
+          "htmlTable","ggplot2","gridExtra","jsonlite","stringr","scales")
+lapply(libs, library, character.only = TRUE)
+```
+
+```{r, include=FALSE}
+rm(list=ls())
+
+theme_set(new = theme_bw())
+set.seed(95616)
+
+# load the dataframe
+tweets <- read_csv("~/GitHub/politsentiment/data/tweets2")
+afd1 <- read_csv("~/GitHub/politsentiment/data/afd2")
+afd2 <- read_csv("~/GitHub/politsentiment/data/afd3")
+
+tweets <- rbind(tweets, afd1, afd2)
+rm(afd1,afd2)
+
+# delete duplicates
+tweets <- distinct(tweets)
+
+# Format the time Variable
+tweets$day <- substr(tweets$date,9,10)
+tweets$time <- substr(tweets$date, 12,19)
+tweets$date <- paste(tweets$day,09,2017,tweets$time)
+tweets$date <- as.POSIXct(tweets$date, format ="%d %m %Y %H:%M:%S")
+tweets$date <- with_tz(tweets$date, "Europe/Paris")
+#tweets$date <- tweets$date + hours(2)
+```
+
+```{r, message=FALSE, warning=FALSE}
+tweets$platform <- substr(tweets$source, regexpr('>', tweets$source) + 1, 
+       regexpr('</', tweets$source) -1)
+
+tweets %>%
+  group_by(platform) %>%
+  tally(sort = TRUE) %>%
+  top_n(19) -> platform_reduced
+
+platform_reduced <- as.vector(platform_reduced$platform)
+
+tweets$platform_reduced <- ifelse(tweets$platform %in% platform_reduced, tweets$platform, "Other")
+```
+
+```{r, include=FALSE}
+# Delete accounts that has been withheld
+tweets <- tweets[!grepl("account has been withheld", tweets$text),]
+tweets <- tweets[!grepl("Politisch", tweets$location),]
+
+# Delete tweets about brasilian soccer
+tweets <- tweets[!grepl("que", tweets$text),]
+tweets <- tweets[!grepl("é", tweets$text),]
+tweets <- tweets[!grepl("amo", tweets$text),]
+tweets <- tweets[!grepl("kkkk", tweets$text),]
+tweets <- tweets[!grepl("cólica", tweets$text),]
+tweets <- tweets[!grepl("garganta", tweets$text),]
+tweets <- tweets[!grepl("respeita", tweets$text),]
+tweets <- tweets[!grepl("para", tweets$text),]
+tweets <- tweets[!grepl("alergia", tweets$text),]
+tweets <- tweets[!grepl("mdrrr", tweets$text),]
+tweets <- tweets[!grepl("sinusite", tweets$text),]
+tweets <- tweets[!grepl("#ODA", tweets$text),]
+tweets <- tweets[!grepl("bohnen", tweets$text),]
+```
+
+```{r, include=FALSE}
+clean.text = function(x)
+{
+  x = tolower(x)
+  x = gsub(" ?(f|ht)(tp)(s?)(://)(.*)[.|/](.*)", " ", x)
+  x = gsub("&amp", " ", x)
+  x = gsub("(RT|via)((?:\\b\\W*@\\w+)+)", "", x)
+  x = gsub("@\\w+", " ", x)
+  x = gsub("[ \t]{2,}", "", x)
+  x = gsub("^\\s+|\\s+$", "", x) 
+  x = gsub( "[^[:alnum:]]", " ", x)
+  x = gsub( "[[:digit:]]", " ", x)
+  return(x)
+}
+
+# apply function to the "orig" dataframe
+tweets$text_cleaned <- clean.text(tweets$text)
+
+# remove just new-line tag from plain-tex for better readability
+tweets$text_cleaned <- gsub("[\r\n]", "", tweets$text_cleaned)
+
+# get stopwords from online dict and add costum stopwords
+# exceptions   <- c("nicht")
+# my_stopwords <- setdiff(stopwords("german"), exceptions)
+my_stopwords <- c(stopwords("german"), 'rt','https','t','amp','dass','beim','co','via',"grüne","gruene","live","video","uhr")
+
+# Remove stopwords
+tweets$text_cleaned<- removeWords(tweets$text_cleaned, my_stopwords)
+```
+
+```{r, include=FALSE}
+# get the tweets that are retweeted 
+tweets$isretweet <- ifelse(grepl('RT', tweets$text),TRUE,FALSE)
+
+# Filter news portals
+privat.names <- c("FOCUS Online","FOCUS Online TopNews","FOCUS Online Politik",
+            "FAZ_NET komplett","FAZ Politik","FAZ Topthemen","FAZ.NET",
+            "SPIEGEL ONLINE alles","SPIEGEL ONLINE","stern",
+            "BILD","BILD Politik", "N24","ntv",
+            "WELT","WELT Politik", "ZEIT ONLINE","ZEIT ONLINE Politik",
+            "Handelsblatt","Handelsblatt Politik",
+            "BuzzFeedNewsDE","BW Breaking News","taz","HuffPost Deutschland","MEEDIA", 
+            "Der Tagesspiegel", "Süddeutsche Zeitung","Stuttgarter Zeitung","Hamburger Abendblatt","Westdeutsche Zeitung","FrankfurterRundschau")
+
+oeffi.names <- c("ZDF","ZDF heute","tagesschau","tagesthemen","Die Nachrichten","Deutschlandfunk","DW (Deutsch)","PHOENIX","WDR Aktuelle Stunde", "NDR", "NDR.de","NDR Info", "MDR", "MDR Aktuell")
+```
+
+
+```{r}
+# news sources
+tweets %>%
+  #filter(isretweet == FALSE) %>%
+  filter(name %in% oeffi.names) %>%
+  filter(partei != "gruene") %>%
+  distinct(text, .keep_all = TRUE) -> oeffis
+
+tweets %>%
+  #filter(isretweet == FALSE) %>%
+  filter(name %in% privat.names) %>%
+  distinct(text, .keep_all = TRUE) -> privat
+
+# other users
+tweets %>%
+  #filter(isretweet == FALSE) %>%
+  filter(!name %in% c(oeffi.names,privat.names)) %>%
+  filter(!(is.na(partei))) %>%
+  distinct(text, .keep_all = TRUE) -> user
+```
+
+```{r, include=FALSE}
+# Extract the retweets
+rt <-  tweets[which(tweets$isretweet==TRUE),]
+# pull the original author's name
+rt$sender <- substr(rt$text, 5, regexpr(':', rt$text) - 1)
+```
+
+## Häufigkeitserteilung der Tweets
+
+#### Anzahl der gesamten Tweets nach Datum
+
+```{r, include=FALSE}
+# subset
+# before elecction
+tweets1 <- filter(tweets, day > 18)
+tweets1 <- filter(tweets1, day < 23)
+
+col <- c("deepskyblue1", "black","limegreen", "darkorchid2","gold", "red2")
+
+ggplot(tweets1, aes(date, fill = partei)) + 
+    geom_histogram(alpha = .7, adjust = .25, binwidth = 500) +
+    scale_fill_manual(values = col) +
+    xlab("") +
+    ylab("Anzahl der Tweets") +
+    scale_x_datetime(breaks = date_breaks("24 hour"), labels=date_format("%a-%d\n%H:%M", tz="CET"))
+```
+
+### Private User
+
+Die Anzahl der privaten User-Accounts ist mit Abstand am größten. Insgesamt 140.193 Tweets wurden in dem betrachteten Zeitraum getweeted (inklusive Retweets). Mehr als die Hälfte davon beinhaltete "AfD".
+
+```{r, echo=FALSE}
+#col <- c("deepskyblue1", "black","limegreen", "darkorchid2","gold", "red2")
+
+user %>%
+  group_by(partei) %>%
+  tally(sort = TRUE)%>%
+  ggplot(aes(partei, (n/nrow(user)))) +
+  xlab("") +
+  ylab("%Anteil der Tweets") +
+  geom_col(fill = col, alpha = .8) +
+  scale_x_discrete(labels=c("afd"="AfD", "cdu"="CDU", "fdp"="FDP", "gruene" = "Die Grünen", "linke"="DIE LINKE", "spd"="SPD"))
+```
+
+#### Private Nachrichtendienste
+
+Die Anzahl der Tweets privater Nachrichtendienste ist beträchtlich kleiner. "Nur" 671 Tweets wurden in dem Zeitraum von den entsprechenden News-Portalen getweeted. Auch hier findet sich der Term "AfD" in knapp unter 50% der gesamten Tweets.
+
+```{r, echo=FALSE}
+privat %>%
+  group_by(partei) %>%
+  tally(sort = TRUE)%>%
+  ggplot(aes(partei, (n/nrow(privat)))) +
+  xlab("") +
+  ylab("%Anteil der Tweets") +
+  geom_col(fill = col, alpha = .8) +
+  scale_x_discrete(labels=c("afd"="AfD", "cdu"="CDU", "fdp"="FDP", "gruene" = "Die Grünen", "linke"="DIE LINKE", "spd"="SPD"))
+```
+
+#### Öffentlich-Rechtliche Nachrichtendienste 
+
+```{r, echo=FALSE}
+oeffis %>%
+  group_by(partei) %>%
+  tally(sort = TRUE)%>%
+  ggplot(aes(partei, (n/nrow(oeffis)))) +
+  xlab("") +
+  ylab("%Anteil der Tweets") +
+  geom_col(fill = col, alpha = .8) +
+    scale_x_discrete(labels=c("afd"="AfD", "cdu"="CDU", "fdp"="FDP", "gruene" = "Die Grünen", "linke"="DIE LINKE", "spd"="SPD"))
+```
+
+## Wordclouds
+
+Welche Wörter werden am häufigsten in Verbindung mit den Parteien getweetet? Zur Visualisierung der am häufigsten verwendeten Wörter in Bezug auf eine Partei, erstellen wir eine Wordcloud.
+
+#### User-Accounts
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+library(wordcloud)
+# WordClouds ####
+# get text
+cdu <- user[which(user$partei=="CDU"),]
+spd <- user[which(user$partei=="SPD"),]
+fdp <- user[which(user$partei=="FDP"),]
+gruene <- user[which(user$partei=="Die Gruenen"),]
+linke <- user[which(user$partei=="DIE LINKE"),]
+afd <- user[which(user$partei=="AfD"),]
+
+# Join texts in a vector 
+cdu <- paste(cdu$text_cleaned, collapse = " ")
+spd <- paste(spd$text_cleaned, collapse = " ")
+fdp <- paste(fdp$text_cleaned, collapse = " ")
+gruene <- paste(gruene$text_cleaned, collapse = " ")
+linke <- paste(linke$text_cleaned, collapse = " ")
+afd <- paste(afd$text_cleaned, collapse = " ")
+
+# put everything in a single vector
+all <- c(cdu, spd, fdp, gruene, linke, afd)
+
+# Step 2: Corpus and term-docs_cleaned matrix ####
+# create corpus
+corp <- Corpus(VectorSource(all))
+corp <- tm_map(corp, removeWords, c("cdu","spd","fdp","gruene","grüne","linke","dielinke","afd"))
+
+# create term-docs_cleaned matrix
+tdm <- TermDocumentMatrix(corp)
+
+# convert as matrix
+tdm <- as.matrix(tdm)
+
+# add column names
+colnames(tdm) <- c("CDU","SPD","FDP","Die Grünen","DIE LINKE","AfD")
+
+# Step 3: Plot comparison wordcloud ####
+col <- c("black","red2", "gold","limegreen","darkorchid2","deepskyblue1")
+
+comparison.cloud(tdm, random.order=FALSE, colors = col, scale=c(3,.5),
+                 title.size=1.2, max.words=150)
+```
+
+#### Private Nachrichten
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+library(wordcloud)
+# WordClouds ####
+# get text
+cdu <- privat[which(privat$partei=="CDU"),]
+spd <- privat[which(privat$partei=="SPD"),]
+fdp <- privat[which(privat$partei=="FDP"),]
+gruene <- privat[which(privat$partei=="Die Gruenen"),]
+linke <- privat[which(privat$partei=="DIE LINKE"),]
+afd <- privat[which(privat$partei=="AfD"),]
+
+# Join texts in a vector 
+cdu <- paste(cdu$text_cleaned, collapse = " ")
+spd <- paste(spd$text_cleaned, collapse = " ")
+fdp <- paste(fdp$text_cleaned, collapse = " ")
+gruene <- paste(gruene$text_cleaned, collapse = " ")
+linke <- paste(linke$text_cleaned, collapse = " ")
+afd <- paste(afd$text_cleaned, collapse = " ")
+
+# put everything in a single vector
+all <- c(cdu, spd, fdp, gruene, linke, afd)
+
+# Step 2: Corpus and term-docs_cleaned matrix ####
+# create corpus
+corp <- Corpus(VectorSource(all))
+corp <- tm_map(corp, removeWords, c("cdu","spd","fdp","gruene","grüne","linke","dielinke","afd"))
+
+# create term-docs_cleaned matrix
+tdm <- TermDocumentMatrix(corp)
+
+# convert as matrix
+tdm <- as.matrix(tdm)
+
+# add column names
+colnames(tdm) <- c("CDU","SPD","FDP","Die Grünen","DIE LINKE","AfD")
+
+# Step 3: Plot comparison wordcloud ####
+comparison.cloud(tdm, random.order=FALSE, colors = col, scale=c(3,.5),
+                 title.size=1.2, max.words=150)
+```
+
+#### Öffentlich-Rechtliche Nachrichten
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+library(wordcloud)
+# WordClouds ####
+# get text
+cdu <- oeffis[which(oeffis$partei=="CDU"),]
+spd <- oeffis[which(oeffis$partei=="SPD"),]
+fdp <- oeffis[which(oeffis$partei=="FDP"),]
+gruene <- oeffis[which(oeffis$partei=="Die Gruenen"),]
+linke <- oeffis[which(oeffis$partei=="DIE LINKE"),]
+afd <- oeffis[which(oeffis$partei=="AfD"),]
+
+# Join texts in a vector 
+cdu <- paste(cdu$text_cleaned, collapse = " ")
+spd <- paste(spd$text_cleaned, collapse = " ")
+fdp <- paste(fdp$text_cleaned, collapse = " ")
+gruene <- paste(gruene$text_cleaned, collapse = " ")
+linke <- paste(linke$text_cleaned, collapse = " ")
+afd <- paste(afd$text_cleaned, collapse = " ")
+
+# put everything in a single vector
+all <- c(cdu, spd, fdp,gruene, linke, afd)
+
+# Step 2: Corpus and term-docs_cleaned matrix ####
+# create corpus
+corp <- Corpus(VectorSource(all))
+corp <- tm_map(corp, removeWords, c("cdu","spd","fdp","gruene","linke","dielinke","afd"))
+
+# create term-docs_cleaned matrix
+tdm <- TermDocumentMatrix(corp)
+
+# convert as matrix
+tdm <- as.matrix(tdm)
+
+# add column names
+colnames(tdm) <- c("CDU","SPD","FDP", "Die Grünen", "DIE LINKE","AfD")
+
+# Step 3: Plot comparison wordcloud ####
+col <- c("black","red2", "gold","limegreen","darkorchid2","deepskyblue1")
+
+comparison.cloud(tdm, random.order=FALSE, colors = col, scale=c(3,.5),
+                 title.size=1.2, max.words=150)
+```
+
+## term frequency - inverse document frequency (tf-idf)
+```{r, include=FALSE}
+user.token <- user %>%
+  group_by(partei) %>%
+  unnest_tokens(word, text_cleaned) %>%
+  count(partei, word, sort = TRUE)  %>%
+  bind_tf_idf(word, partei, n) %>%
+  arrange(desc(tf_idf))
+
+privat.token <- privat %>%
+  group_by(partei) %>%
+  unnest_tokens(word, text_cleaned) %>%
+  count(partei, word, sort = TRUE)  %>%
+  bind_tf_idf(word, partei, n) %>%
+  arrange(desc(tf_idf))
+
+oeffis.token <- oeffis %>%
+  group_by(partei) %>%
+  unnest_tokens(word, text_cleaned) %>%
+  count(partei, word, sort = TRUE)  %>%
+  bind_tf_idf(word, partei, n) %>%
+  arrange(desc(tf_idf))
+```
+
+Die Idee des tf-idf Wertes (aus dem englischen "term frequency - inverse document frequency") ist es, die Relevanz eines Wortes für den Inhalt eines Dokumentes (in diesem Fall einer Partei) zu finden - und zwar im Vergleich zu allen im Korpus enthaltenen Dokumente (bzw. Parteien).
+
+TF(t) = (Anzahl von Term t pro Patei) / (Anzahl aller Terme pro Partei)
+
+IDF(t) = log\_e(Anzahl aller Parteien / Anzahl von Parteien, die den Term t enthalten)
+
+In den folgenden Abbildungen, sind die Wörter (sog. unique terms) mit den höchsten tf-idf Werten pro Partei aufgelistet. Diese Wörter werden sind also im Zusammenhang einer Partei am "relevantesten". 
+
+#### Private Accounts
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+col <- c("deepskyblue1", "black","limegreen", "darkorchid2","gold", "red2")
+
+plot_tweets <- user.token %>%
+  arrange(desc(tf_idf)) %>%
+  mutate(word = factor(word, levels = rev(unique(word))))
+
+plot_tweets %>% 
+  top_n(5) %>%
+  ggplot(aes(word, tf_idf, fill = partei)) +
+  geom_col() +
+  scale_fill_manual(values=col) +
+  labs(x = NULL, y = "tf-idf") +
+  coord_flip()
+```
+
+Man erkennt, dass vor allem mit Bezug auf die FDP anscheinend recht "einseitig" getwittert wurde. Hinter dem Term "Trödel" versteckt sich beispielsweise der Artikel vom Stern "Trödel neu denken oder: Fünf Gründe, warum man die FDP nicht wählen kann". Unter "Schnurre" findet man hauptsächlich Tweets zu dem Vorfall, bei dem FDP Kandidat Jörg Schnurre 2EUR für eine Stimme bot. 
+
+AfD-Wähler haben sich anscheinend mit dem Spiegel erzürnt. Der Term "Lügenspiegel" und "NichtmeinSpiegel" scheint beliebt zu sein. Außerdem scheint das spanische Wort reconquista (Rückeroberung) beliebt zu sein in Zusammenhang mit der AfD. Unter dem Begriff versteht man allgemein das Entstehen und die Ausdehnung des Herrschaftsbereichs der christlichen Reiche der Iberischen Halbinsel unter Zurückdrängung des muslimischen Machtbereichs (al-Andalus) im Mittelalter. 
+
+In Zusammenhang mit den Grünen wurde der Lifestream mit Ulrike Lunacek über Twitter diskutiert und Die Linke hat mit ihren verbesserten Umfragewerten die Hoffnung auf eine "Linksfraktion" neu erweckt. Bei der CDU hat der Tod des ehemaligen CDU-Generalsekretär Heiner Geißler Eindruck hinterlassen und bei der SPD ging es diese Woche um die SPD-Kandidaten Mechtild Rawert, Ralf Stegner und Manuela Schwesig.
+
+
+#### Private Nachrichtendienste
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+#ignore <- c("cdu","afd")
+col <- c("deepskyblue1", "black","limegreen","gold", "red2")
+
+plot_tweets <- privat.token %>%
+  filter(partei != "DIE LINKE") %>%
+  #filter(!word %in% ignore) %>%
+  arrange(desc(tf_idf)) %>%
+  mutate(word = factor(word, levels = rev(unique(word))))
+
+plot_tweets %>% 
+  top_n(5) %>%
+  ggplot(aes(word, tf_idf, fill = partei)) +
+  geom_col() +
+  scale_fill_manual(values=col) +
+  labs(x = NULL, y = "tf-idf") +
+  coord_flip()
+```
+
+Auch bei den privaten Nachrichtenportalen war der Tod von Heiner Geißler in Bezug auf die CDU ein verbreitetes Thema. 
+
+#### Öffentlich-Rechtliche Nachrichtendienste
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+col <- c("deepskyblue1", "black","red2")
+
+plot_tweets <- oeffis.token %>%
+  filter(partei != "FDP") %>%
+  filter(partei != "Die Gruenen") %>%
+  filter(partei != "DIE LINKE") %>%
+  arrange(desc(tf_idf)) %>%
+  mutate(word = factor(word, levels = rev(unique(word))))
+
+plot_tweets %>% 
+  top_n(5) %>%
+  ggplot(aes(word, tf_idf, fill = partei)) +
+  geom_col() +
+  scale_fill_manual(values=col) +
+  labs(x = NULL, y = "tf-idf") +
+  coord_flip()
+```
+
+## Sentiment Analyse
+
+Interessant ist zunächst der Blick auf die am meisten verwendeten positiven und negativen Wörter um die Stimmung oder Emotionen (Sentiment) im Zusammenhang mit den Parteien auszulesen. 
+
+Ungewichtete Sentiment-Analyse: Zunächst betrachten wir, ob und welche Sentiment-Wörter auftauchen ohne diesen Wörtern den Sentiment-Wert zuzuweisen.  
+
+Gewichtete Sentiment-Analyse: Bei der gewichten Analyse wird den einzelnen "Sentiment" Worten ein Wert zugewiesen. Der Score gibt den Wert an, der sich aus der Summe der zugewiesenen Werte der positiven und negativen Wörter ergibt.
+
+Das Prinzip dieser Analyse im einfachsten Fall so:
+
+Für jedes Wort im Text:
+  Überprüfe, ob das Wort im Lexikon existiert.
+  Wenn JA, dann:
+    Weise dem Wort den Sentiment-Wert aus dem Lexikon zu UND
+    Addiere diesen Wert zu dem Sentimentwert des Dokuments.
+  Wenn NEIN, dann:
+    Gehe weiter zum nächsten Wort.
+  
+  Gebe die Summenwerte pro Sentiment (z.b. negativ, positiv)
+
+Wir verwenden das Lexikon der Leipzig Corpora Collection (http://wortschatz.uni-leipzig.de/de/download). 
+```{r, message=FALSE, warning=FALSE, include=FALSE}
+# Load dictionaries (from: http://wortschatz.uni-leipzig.de/de/download)
+neg_df <- read_tsv("~/CloudStation/textmining/dict/SentiWS_v1.8c_Negative.txt", col_names = FALSE)
+names(neg_df) <- c("Wort_POS", "Wert", "Inflektionen")
+
+neg_df %>% 
+  mutate(Wort = str_sub(Wort_POS, 1, regexpr("\\|", .$Wort_POS)-1),
+         POS = str_sub(Wort_POS, start = regexpr("\\|", .$Wort_POS)+1)) -> neg_df
+
+
+pos_df <- read_tsv("~/CloudStation/textmining/dict/SentiWS_v1.8c_Positive.txt", col_names = FALSE)
+names(pos_df) <- c("Wort_POS", "Wert", "Inflektionen")
+
+pos_df %>% 
+  mutate(Wort = str_sub(Wort_POS, 1, regexpr("\\|", .$Wort_POS)-1),
+         POS = str_sub(Wort_POS, start = regexpr("\\|", .$Wort_POS)+1)) -> pos_df
+
+bind_rows("neg" = neg_df, "pos" = pos_df, .id = "neg_pos") -> sentiment_df
+
+sentiment_df %>% select(neg_pos, Wort, Wert, Inflektionen, -Wort_POS) -> sentiment_df
+
+sentiment_df %>% 
+  rename(word = Wort) -> sentiment_df
+```
+
+### Private User 
+
+#### Ungewichtete Analyse
+
+```{r, message=FALSE, warning=FALSE, include=FALSE}
+user.token <- user %>%
+  unnest_tokens(word, text_cleaned)
+
+sentiment_neg <- match(user.token$word, filter(sentiment_df, neg_pos == "neg")$word)
+sentiment_pos <- match(user.token$word, filter(sentiment_df, neg_pos == "pos")$word)
+
+user.token %>% 
+  mutate(sentiment_neg = sentiment_neg,
+         sentiment_pos = sentiment_pos) -> user.token
+
+user.token %>%
+  group_by(partei, word) %>%
+  mutate(count = n()) -> user.token
+
+user.token %>%
+  group_by(partei) %>%
+  filter(!is.na(sentiment_neg)) %>%
+  dplyr::select(word, count) -> negative_sentiments
+
+user.token %>%
+  group_by(partei) %>%
+  filter(!is.na(sentiment_pos)) %>%
+  dplyr::select(word, count) -> positive_sentiments
+```
+
+##### Anzahl negativer Sentiment-Wörter
+
+Bei der CDU überwiegt das Wort "tot" auf Grund des bereits angesprochnen Todes von  Heiner Geißler. Das Wort "leider" ist bei allen Parteien wiederzufinden. Auffällig ist noch, dass in Zusammenhang mit der AFD häufig das Wort "verfassungswidrig" verwendet wird.
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+plot_sentiments <- negative_sentiments %>%
+  arrange(desc(count)) %>%
+  group_by(partei) %>%
+  distinct() %>%
+  mutate(word = factor(word, levels = rev(unique(word))))
+
+col <- c("deepskyblue1", "black","limegreen","darkorchid2", "gold", "red2")
+
+plot_sentiments %>% 
+  top_n(10) %>%
+  ggplot(aes(word, count, fill = partei)) +
+  geom_col() +
+  scale_fill_manual(values=col) +
+  labs(x = NULL, y = "negative term count") +
+  coord_flip()
+```
+
+##### Anzahl positiver Sentiment-Wörter
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+plot_sentiments <- positive_sentiments %>%
+  arrange(desc(count)) %>%
+  group_by(partei) %>%
+  distinct() %>%
+  mutate(word = factor(word, levels = rev(unique(word))))
+
+plot_sentiments %>% 
+  top_n(15) %>%
+  ggplot(aes(word, count, fill = partei)) +
+  geom_col() +
+  scale_fill_manual(values=col) +
+  labs(x = NULL, y = "positive term count") +
+  coord_flip()
+```
+
+
+#### Gewichtete Analyse
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+user.token %>% 
+  left_join(sentiment_df, by = "word") -> user.token 
+
+col <- c("deepskyblue1", "black","red2", "limegreen","darkorchid2","gold")
+
+user.token %>% 
+  group_by(partei) %>%
+  filter(!is.na(Wert)) %>% 
+  summarise(Sentimentwert = sum(Wert, na.rm = TRUE)) %>%
+  ggplot(aes(partei,Sentimentwert)) +
+          xlab("") +
+           geom_col(fill = col) 
+  #scale_x_discrete(labels=c("afd"="AfD", "cdu"="CDU", "fdp"="FDP", "gruene" = "Die Grünen", "linke"="DIE LINKE", "spd"="SPD"))
+
+```
+
+#### Private Nachrichtenportale
+```{r, message=FALSE, warning=FALSE, include=FALSE}
+privat.token <- privat %>%
+  unnest_tokens(word, text_cleaned)
+
+sentiment_neg <- match(privat.token$word, filter(sentiment_df, neg_pos == "neg")$word)
+sentiment_pos <- match(privat.token$word, filter(sentiment_df, neg_pos == "pos")$word)
+
+privat.token %>% 
+  mutate(sentiment_neg = sentiment_neg,
+         sentiment_pos = sentiment_pos) -> privat.token
+
+privat.token %>%
+  group_by(partei, word) %>%
+  mutate(count = n()) -> privat.token
+
+privat.token %>%
+  group_by(partei) %>%
+  filter(!is.na(sentiment_neg)) %>%
+  dplyr::select(word, count) -> negative_sentiments
+
+privat.token %>%
+  group_by(partei) %>%
+  filter(!is.na(sentiment_pos)) %>%
+  dplyr::select(word, count) -> positive_sentiments
+```
+
+##### Anzahl negativer Sentiment-Wörter
+
+Bei der CDU überwiegt das Wort "tot" auf Grund des bereits angesprochnen Todes von  Heiner Geißler. Das Wort "leider" ist bei allen Parteien wiederzufinden. Auffällig ist noch, dass in Zusammenhang mit der AFD häufig das Wort "verfassungswidrig" verwendet wird.
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+plot_sentiments <- negative_sentiments %>%
+  arrange(desc(count)) %>%
+  group_by(partei) %>%
+  distinct() %>%
+  mutate(word = factor(word, levels = rev(unique(word))))
+
+col <- c("deepskyblue1", "black","limegreen", "gold", "red2")
+
+plot_sentiments %>% 
+  top_n(10) %>%
+  ggplot(aes(word, count, fill = partei)) +
+  geom_col() +
+  scale_fill_manual(values=col) +
+  labs(x = NULL, y = "negative term count") +
+  coord_flip()
+```
+
+##### Anzahl positiver Sentiment-Wörter
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+plot_sentiments <- positive_sentiments %>%
+  arrange(desc(count)) %>%
+  group_by(partei) %>%
+  distinct() %>%
+  mutate(word = factor(word, levels = rev(unique(word))))
+
+#col <- c("deepskyblue1", "black", "gold","limegreen", "red2")
+
+plot_sentiments %>% 
+  top_n(15) %>%
+  ggplot(aes(word, count, fill = partei)) +
+  geom_col() +
+  scale_fill_manual(values=col) +
+  labs(x = NULL, y = "positive term count") +
+  coord_flip()
+```
+
+#### Gewichtete Analyse
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+privat.token %>% 
+  left_join(sentiment_df, by = "word") -> privat.token 
+
+col <- c("black","limegreen","red2", "deepskyblue1", "gold")
+
+privat.token %>% 
+  group_by(partei) %>%
+  filter(!is.na(Wert)) %>% 
+  summarise(Sentimentwert = sum(Wert, na.rm = TRUE)) %>%
+  ggplot(aes(partei,Sentimentwert)) +
+          xlab("") +
+           geom_col(fill = col) 
+
+```
+
+#### Öffentlich-Rechtliche Nachrichten
+```{r, message=FALSE, warning=FALSE, include=FALSE}
+oeffis.token <- oeffis %>%
+  unnest_tokens(word, text_cleaned)
+
+sentiment_neg <- match(oeffis.token$word, filter(sentiment_df, neg_pos == "neg")$word)
+sentiment_pos <- match(oeffis.token$word, filter(sentiment_df, neg_pos == "pos")$word)
+
+oeffis.token %>% 
+  mutate(sentiment_neg = sentiment_neg,
+         sentiment_pos = sentiment_pos) -> oeffis.token
+
+oeffis.token %>%
+  group_by(partei, word) %>%
+  mutate(count = n()) -> oeffis.token
+
+oeffis.token %>%
+  group_by(partei) %>%
+  filter(!is.na(sentiment_neg)) %>%
+  dplyr::select(word, count) -> negative_sentiments
+
+oeffis.token %>%
+  group_by(partei) %>%
+  filter(!is.na(sentiment_pos)) %>%
+  dplyr::select(word, count) -> positive_sentiments
+```
+
+##### Anzahl negativer Sentiment-Wörter
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+plot_sentiments <- negative_sentiments %>%
+  arrange(desc(count)) %>%
+  group_by(partei) %>%
+  distinct() %>%
+  mutate(word = factor(word, levels = rev(unique(word))))
+
+col <- c("deepskyblue1", "black","darkorchid2", "gold","red2")
+
+plot_sentiments %>% 
+  top_n(10) %>%
+  ggplot(aes(word, count, fill = partei)) +
+  geom_col() +
+  scale_fill_manual(values=col) +
+  labs(x = NULL, y = "negative term count") +
+  coord_flip()
+```
+
+##### Anzahl positiver Sentiment-Wörter
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+plot_sentiments <- positive_sentiments %>%
+  arrange(desc(count)) %>%
+  group_by(partei) %>%
+  distinct() %>%
+  mutate(word = factor(word, levels = rev(unique(word))))
+
+col <- c("deepskyblue1", "black","limegreen","darkorchid2","gold","red2")
+
+plot_sentiments %>% 
+  top_n(10) %>%
+  ggplot(aes(word, count, fill = partei)) +
+  geom_col() +
+  scale_fill_manual(values=col) +
+  labs(x = NULL, y = "positive term count") +
+  coord_flip()
+```
+
+#### Gewichtete Analyse
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+oeffis.token %>% 
+  left_join(sentiment_df, by = "word") -> oeffis.token 
+
+col <- c("black","gold","red2","deepskyblue1","limegreen","darkorchid2")
+
+oeffis.token %>% 
+  group_by(partei) %>%
+  filter(!is.na(Wert)) %>% 
+  summarise(Sentimentwert = sum(Wert, na.rm = TRUE)) %>%
+  ggplot(aes(partei,Sentimentwert)) +
+          xlab("") +
+           geom_col(fill = col) 
+
+```

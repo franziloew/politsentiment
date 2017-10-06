@@ -1,0 +1,402 @@
+---
+title: "Politik Index"
+author: "Franzi Löw"
+date: "`r format(Sys.Date())`"
+output: github_document
+---
+
+## Load Data in python
+
+```{python, engine.path="/Users/Franzi/anaconda/bin/python3.6", include=FALSE}
+import json
+import pandas as pd
+import feather
+
+# -------- AfD ----------- # 
+tweet_files = ['/Users/Franzi/GitHub/twitter/politIndex/afd/afd_2017-09-07_to_2017-09-13.json']
+tweets = []
+for file in tweet_files:
+    with open(file, 'r') as f:
+        for line in f.readlines():
+            tweets.append(json.loads(line))
+
+def populate_tweet_df(tweets):
+    df = pd.DataFrame()
+    df['text'] = list(map(lambda tweet: tweet['text'], tweets))
+    df['location'] = list(map(lambda tweet: tweet['user']['location'], tweets))
+    df['date'] = list(map(lambda tweet: tweet['created_at'], tweets))
+    df['retweet_count'] = list(map(lambda tweet: tweet['retweet_count'], tweets))
+    return df
+
+afd = populate_tweet_df(tweets)
+
+# save df as textfile
+feather.write_dataframe(afd, '/Users/Franzi/GitHub/twitter/politIndex/output/tweets_afd')
+
+# -------- CDU ----------- # 
+tweet_files = ['/Users/Franzi/GitHub/twitter/politIndex/cdu/cdu_2017-09-07_to_2017-09-13.json']
+tweets = []
+for file in tweet_files:
+    with open(file, 'r') as f:
+        for line in f.readlines():
+            tweets.append(json.loads(line))
+
+def populate_tweet_df(tweets):
+    df = pd.DataFrame()
+    df['text'] = list(map(lambda tweet: tweet['text'], tweets))
+    df['location'] = list(map(lambda tweet: tweet['user']['location'], tweets))
+    df['date'] = list(map(lambda tweet: tweet['created_at'], tweets))
+    df['retweet_count'] = list(map(lambda tweet: tweet['retweet_count'], tweets))
+    return df
+
+cdu = populate_tweet_df(tweets)
+
+# save df as textfile
+feather.write_dataframe(cdu, '/Users/Franzi/GitHub/twitter/politIndex/output/tweets_cdu')
+
+# -------- SPD ----------- # 
+tweet_files = ['/Users/Franzi/GitHub/twitter/politIndex/spd/spd_2017-09-07_to_2017-09-13.json']
+tweets = []
+for file in tweet_files:
+    with open(file, 'r') as f:
+        for line in f.readlines():
+            tweets.append(json.loads(line))
+
+def populate_tweet_df(tweets):
+    df = pd.DataFrame()
+    df['text'] = list(map(lambda tweet: tweet['text'], tweets))
+    df['location'] = list(map(lambda tweet: tweet['user']['location'], tweets))
+    df['date'] = list(map(lambda tweet: tweet['created_at'], tweets))
+    df['retweet_count'] = list(map(lambda tweet: tweet['retweet_count'], tweets))
+    return df
+
+spd = populate_tweet_df(tweets)
+
+# save df as textfile
+feather.write_dataframe(spd, '/Users/Franzi/GitHub/twitter/politIndex/output/tweets_spd')
+
+```
+
+```{r, message=FALSE, include=FALSE}
+# load the packages
+libs <- c("feather", "tidytext","tidyr","readr","lubridate","tm","stm",
+          "plyr","dplyr","class","knitr","kableExtra","cldr",
+          "htmlTable","ggplot2","gridExtra","jsonlite","stringr
+")
+lapply(libs, library, character.only = TRUE)
+
+```
+
+```{r, include=FALSE}
+rm(list=ls())
+
+theme_set(new = theme_bw())
+set.seed(95616)
+
+# load the dataframe
+afd_tweets <- read_feather('/Users/Franzi/GitHub/twitter/politIndex/output/tweets_afd')
+afd_tweets$partei <- "afd"
+
+cdu_tweets <- read_feather('/Users/Franzi/GitHub/twitter/politIndex/output/tweets_cdu')
+cdu_tweets$partei <- "cdu"
+
+spd_tweets <- read_feather('/Users/Franzi/GitHub/twitter/politIndex/output/tweets_spd')
+spd_tweets$partei <- "spd"
+
+tweets <- rbind(afd_tweets,cdu_tweets,spd_tweets)
+```
+
+```{r, include=FALSE}
+# Format the time Variable
+tweets$day <- substr(tweets$date,9,10)
+tweets$time <- substr(tweets$date, 12,19)
+tweets$date <- paste(tweets$day,09,2017,tweets$time)
+tweets$date <- as.POSIXct(tweets$date, format ="%d %m %Y %H:%M:%S")
+tweets$date <- tweets$date + hours(1)
+```
+
+```{r, include=FALSE}
+# Detect language 
+language <- detectLanguage(tweets$text)
+tweets$language <- language$detectedLanguage
+
+# Keep only German 
+tweets <- tweets[which(tweets$language == "GERMAN"),]
+```
+
+```{r, message=FALSE, warning=FALSE}
+# get the tweets that are retweeted 
+tweets$isretweet <- ifelse(grepl('RT', tweets$text),TRUE,FALSE)
+# Split into retweets and original tweets
+orig <- tweets[which(tweets$isretweet==FALSE),]
+# Extract the retweets
+rt <-  tweets[which(tweets$isretweet==TRUE),]
+# pull the original author's name
+rt$sender <- substr(rt$text, 5, regexpr(':', rt$text) - 1)
+```
+
+## Input Dataframe
+```{r}
+orig %>%
+  arrange(desc(retweet_count)) -> orig
+
+htmlTable(orig[1:5,], align="l")
+```
+
+### When do people tweet?
+```{r, message=FALSE, warning=FALSE}
+ggplot(tweets, aes(date)) + 
+    geom_density(aes(fill = isretweet), alpha = .4, adjust = .25) +
+    scale_fill_discrete(guide = 'none') +
+    theme(legend.position = "topright") +
+    xlab('Time of tweets')
+
+```
+
+## Text Pre-processing
+
+```{r, include=FALSE}
+clean.text = function(x)
+{
+  x = tolower(x)
+  x = gsub(" ?(f|ht)(tp)(s?)(://)(.*)[.|/](.*)", "", x)
+  x = gsub("&amp", "", x)
+  x = gsub("(RT|via)((?:\\b\\W*@\\w+)+)", "", x)
+  x = gsub("@\\w+", "", x)
+  x = gsub("[ \t]{2,}", "", x)
+  x = gsub("^\\s+|\\s+$", "", x) 
+  x = gsub( "[^[:alnum:]]", " ", x)
+  x = gsub( "[[:digit:]]", " ", x)
+  return(x)
+}
+
+# apply function to the "orig" dataframe
+orig$text_cleaned <- clean.text(orig$text)
+
+# remove just new-line tag from plain-tex for better readability
+orig$text_cleaned <- gsub("[\r\n]", "", orig$text_cleaned)
+```
+
+```{r, include=FALSE}
+# get stopwords from online dict and add costum stopwords
+stop_words <- c(stopwords("german"),stopwords('english'), 'rt','https','t','amp','dass','beim','co','via',"oda")
+# Remove stopwords
+orig$text_cleaned<- removeWords(orig$text_cleaned, stop_words)
+```
+
+
+```{r}
+htmlTable(orig[1:5,c('text',"text_cleaned")], align = "l")
+```
+
+## Text analysis 
+Now that we have cleaned the text, we can do some basic analysis.
+
+```{r, message=FALSE, warning=FALSE}
+tweets.token <- orig %>%
+  group_by(partei) %>%
+  unnest_tokens(word, text_cleaned) %>%
+  count(partei, word, sort = TRUE)  %>%
+  bind_tf_idf(word, partei, n) %>%
+  arrange(desc(tf_idf)) 
+
+htmlTable(tweets.token[1:20,c("partei","word","n","tf_idf")], align = "l")
+```
+
+### Visualization for high tf-idf words
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+plot_tweets <- tweets.token %>%
+  arrange(desc(tf_idf)) %>%
+  mutate(word = factor(word, levels = rev(unique(word))))
+
+plot_tweets %>% 
+  top_n(10) %>%
+  ggplot(aes(word, tf_idf, fill = partei)) +
+  geom_col() +
+  labs(x = NULL, y = "tf-idf") +
+  coord_flip()
+```
+
+## Individually by party
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+plot_tweets %>% 
+  group_by(partei) %>% 
+  top_n(15) %>% 
+  ungroup %>%
+  ggplot(aes(word, tf_idf, fill = partei)) +
+  geom_col(show.legend = FALSE) +
+  labs(x = NULL, y = "tf-idf") +
+  facet_wrap(~partei, ncol = 2, scales = "free") +
+  coord_flip()
+```
+
+#### What does "raab" has to do with afd?
+
+```{r}
+orig %>%
+  filter(str_detect(text, "Raab")) %>%
+  select(text) %>%
+  htmlTable(align="l")
+```
+
+
+### Wordcloud 
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+library(wordcloud)
+# WordClouds ####
+# get text
+afd <- orig[which(orig$partei=="afd"),]
+cdu <- orig[which(orig$partei=="cdu"),]
+spd <- orig[which(orig$partei=="spd"),]
+
+# Join texts in a vector 
+afd <- paste(afd$text_cleaned, collapse = " ")
+cdu <- paste(cdu$text_cleaned, collapse = " ")
+spd <- paste(spd$text_cleaned, collapse = " ")
+
+# put everything in a single vector
+all <- c(afd, cdu, spd)
+
+# Step 2: Corpus and term-docs_cleaned matrix ####
+# create corpus
+corp <- Corpus(VectorSource(all))
+corp <- tm_map(corp, removeWords, c("afd","cdu","spd"))
+
+# create term-docs_cleaned matrix
+tdm <- TermDocumentMatrix(corp)
+
+# convert as matrix
+tdm <- as.matrix(tdm)
+
+# add column names
+colnames(tdm) <- c("afd","cdu","spd")
+
+# Step 3: Plot comparison wordcloud ####
+comparison.cloud(tdm, random.order=FALSE, 
+                 title.size=1.5, max.words=200)
+```
+
+## Sentiment Analyse
+
+```{r, include=FALSE}
+# Load dictionaries (from: http://wortschatz.uni-leipzig.de/de/download)
+neg_df <- read_tsv("~/CloudStation/textmining/dict/SentiWS_v1.8c_Negative.txt", col_names = FALSE)
+names(neg_df) <- c("Wort_POS", "Wert", "Inflektionen")
+
+neg_df %>% 
+  mutate(Wort = str_sub(Wort_POS, 1, regexpr("\\|", .$Wort_POS)-1),
+         POS = str_sub(Wort_POS, start = regexpr("\\|", .$Wort_POS)+1)) -> neg_df
+
+
+pos_df <- read_tsv("~/CloudStation/textmining/dict/SentiWS_v1.8c_Positive.txt", col_names = FALSE)
+names(pos_df) <- c("Wort_POS", "Wert", "Inflektionen")
+
+pos_df %>% 
+  mutate(Wort = str_sub(Wort_POS, 1, regexpr("\\|", .$Wort_POS)-1),
+         POS = str_sub(Wort_POS, start = regexpr("\\|", .$Wort_POS)+1)) -> pos_df
+
+bind_rows("neg" = neg_df, "pos" = pos_df, .id = "neg_pos") -> sentiment_df
+sentiment_df %>% select(neg_pos, Wort, Wert, Inflektionen, -Wort_POS) -> sentiment_df
+```
+
+
+```{r, include=FALSE}
+tweets.token <- orig %>%
+  unnest_tokens(word, text_cleaned)
+
+sentiment_neg <- match(tweets.token$word, filter(sentiment_df, neg_pos == "neg")$Wort)
+sentiment_pos <- match(tweets.token$word, filter(sentiment_df, neg_pos == "pos")$Wort)
+
+tweets.token %>% 
+  mutate(sentiment_neg = sentiment_neg,
+         sentiment_pos = sentiment_pos) -> tweets.token
+```
+
+### Unweighted analysis
+
+Welche negativen Wörter und welche positiven Wörter wurden verwendet?
+
+```{r, message=FALSE, warning=FALSE, include=FALSE}
+tweets.token %>%
+  group_by(partei) %>%
+  filter(!is.na(sentiment_neg)) %>%
+  dplyr::select(word) -> negative_sentiments
+
+tweets.token %>%
+  group_by(partei) %>%
+  filter(!is.na(sentiment_pos)) %>%
+  dplyr::select(word) -> positive_sentiments
+```
+
+#### AfD
+Negativ
+```{r, echo=FALSE}
+negative_sentiments %>%
+  filter(partei == "afd") %>%
+  filter(row_number() < 16) %>%
+  htmlTable()
+```
+
+Positiv
+```{r, echo=FALSE}
+positive_sentiments %>%
+  filter(partei == "afd") %>%
+  filter(row_number() < 16) %>%
+  htmlTable()
+```
+
+#### CDU
+
+Negativ
+```{r, echo=FALSE}
+negative_sentiments %>%
+  filter(partei == "cdu") %>%
+  filter(row_number() < 16) %>%
+  htmlTable()
+```
+
+Positiv
+```{r, echo=FALSE}
+positive_sentiments %>%
+  filter(partei == "cdu") %>%
+  filter(row_number() < 16) %>%
+  htmlTable()
+```
+
+#### Spd
+
+Negativ
+```{r, echo=FALSE}
+negative_sentiments %>%
+  filter(partei == "spd") %>%
+  filter(row_number() < 16) %>%
+  htmlTable()
+```
+
+Positiv
+```{r, echo=FALSE}
+positive_sentiments %>%
+  filter(partei == "spd") %>%
+  filter(row_number() < 16) %>%
+  htmlTable()
+```
+
+### Weighted Analysis
+```{r}
+sentiment_df %>% 
+  rename(word = Wort) -> sentiment_df
+
+tweets.token %>% 
+  left_join(sentiment_df, by = "word") -> tweets.token 
+
+tweets.token %>% 
+  group_by(partei) %>%
+  filter(!is.na(Wert)) %>% 
+  summarise(Sentimentwert = sum(Wert, na.rm = TRUE)) -> sentiment_summe
+
+htmlTable(sentiment_summe$Sentimentwert, header = c("afd","cdu","spd"), caption = "Weighted sentiment value")
+```
+
+
+
