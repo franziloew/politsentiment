@@ -17,7 +17,7 @@ lapply(libs, library, character.only = TRUE)
 
 ```{r, include=FALSE}
 rm(list = ls())
-load(file = "~/GitHub/politsentiment/out/tweets_18_24.rda")
+load(file = "~/GitHub/politsentiment_data/out/tweets_18_24.rda")
 
 tweets %>%
   filter(!partei == "Die Grünen") -> tweets

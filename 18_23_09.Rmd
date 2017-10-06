@@ -24,9 +24,9 @@ theme_set(new = theme_bw())
 set.seed(95616)
 
 # load the dataframe
-tweets <- read_csv("~/GitHub/politsentiment/data/tweets_18_24")
-afd1 <- read_csv("~/GitHub/politsentiment/data/tweets_18_24_afd2")
-afd2 <- read_csv("~/GitHub/politsentiment/data/tweets_18_24_afd3")
+tweets <- read_csv("~/GitHub/politsentiment_data/data/tweets_18_24")
+afd1 <- read_csv("~/GitHub/politsentiment_data/data/tweets_18_24_afd2")
+afd2 <- read_csv("~/GitHub/politsentiment_data/data/tweets_18_24_afd3")
 
 tweets <- rbind(tweets, afd1, afd2)
 rm(afd1,afd2)
@@ -132,12 +132,12 @@ tweets <- rbind(cdu,spd,fdp,gruene,linke,afd)
 ```
 
 ```{r, eval=FALSE, include=FALSE}
-save(tweets, file = "~/GitHub/politsentiment/out/tweets_18_24.rda")
+save(tweets, file = "~/GitHub/politsentiment_data/out/tweets_18_24.rda")
 ```
 
 ```{r, include=FALSE}
 rm(list = ls())
-load(file = "~/GitHub/politsentiment/out/tweets_18_24.rda")
+load(file = "~/GitHub/politsentiment_data/out/tweets_18_24.rda")
 
 tweets %>%
   filter(!partei == "Die Grünen") -> tweets

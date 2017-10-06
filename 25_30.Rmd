@@ -24,7 +24,7 @@ theme_set(new = theme_bw())
 set.seed(95616)
 
 # load the dataframe
-tweets <- read_csv("~/GitHub/politsentiment/out/tweets_25_30")
+tweets <- read_csv("~/GitHub/politsentiment_data/out/tweets_25_30")
 
 # delete duplicates
 tweets <- distinct(tweets, keep_all=TRUE)
@@ -141,12 +141,12 @@ rt$sender <- substr(rt$text, 5, regexpr(':', rt$text) - 1)
 ```
 
 ```{r, eval=FALSE, include=FALSE}
-save(tweets, rt, file = "~/GitHub/politsentiment/out/tweets_25_30.rda")
+save(tweets, rt, file = "~/GitHub/politsentiment_data/out/tweets_25_30.rda")
 ```
 
 ```{r, include=FALSE}
 rm(list = ls())
-load(file = "~/GitHub/politsentiment/out/tweets_25_30.rda")
+load(file = "~/GitHub/politsentiment_data/out/tweets_25_30.rda")
 
 # Set Color
 col <- c("deepskyblue1", "black","limegreen", "darkorchid2","gold", "red2")
