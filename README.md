@@ -12,7 +12,7 @@ Die Untersuchung führen wir mit den Methoden des Text Minings - z.B. Term-Häuf
 
 ### Bundestagswahl 2017
 
-##### Nach der Wahl [26.September - 29.September](15_30.md)
+##### Nach der Wahl [26.September - 29.September](25_30.md)
 
 ##### Wahltag [24.September](election.md)
 
