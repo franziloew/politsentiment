@@ -1,19 +1,19 @@
 Was wurde am Wahltag getwittert?
 ================
-2017-10-06
+2017-10-09
 
 Erläuterungen zu den einzelnen Analyseschritten finden Sie [hier](https://franziloew.github.io/politsentiment/)
 
 ### Anzahl der gesamten Tweets nach Datum
 
-Wir betrachten einen Zeitraum von 8h (Sonntag, 24.09.2017, 16Uhr - 24Uhr) Pünktlich um 18:00 Uhr zu den ersten Hochrechnungen steigt die Anzahl der Tweets rapide an.
+Wir betrachten einen Zeitraum von 12h (Sonntag, 24.09.2017, 12Uhr - 24Uhr) Pünktlich um 18:00 Uhr zu den ersten Hochrechnungen steigt die Anzahl der Tweets rapide an.
 
 ![](election_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-3-1.png)
 
 1. Von welchen Plattformen werden die meisten Tweets gesendet?
 --------------------------------------------------------------
 
-![](election_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-4-1.png)
+![](election_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-5-1.png)
 
 2. Wer retweeted wen?
 ---------------------
@@ -145,17 +145,17 @@ Anzahlt gesamte Tweets: <!--html_preserve-->
 <tbody>
 <tr style="border-top: 2px solid grey;">
 <td style="border-top: 2px solid grey; border-bottom: 2px solid grey; text-align: center;">
-444802
+150825
 </td>
 </tr>
 </tbody>
 </table>
 <!--/html_preserve-->
 ``` r
-tweets1 %>%
+orig %>%
   group_by(partei) %>%
   tally(sort = TRUE)%>%
-  ggplot(aes(reorder(partei,n), (n/nrow(tweets1)))) +
+  ggplot(aes(reorder(partei,n), (n/nrow(orig)))) +
   xlab("") +
   ylab("%Anteil der Tweets") +
   geom_col(fill = c("darkorchid2","gold","black","red2", "deepskyblue1"), alpha = .8) +
@@ -171,7 +171,7 @@ Anzahlt gesamte Tweets: <!--html_preserve-->
 <tbody>
 <tr style="border-top: 2px solid grey;">
 <td style="border-top: 2px solid grey; border-bottom: 2px solid grey; text-align: center;">
-775
+604
 </td>
 </tr>
 </tbody>
@@ -186,7 +186,7 @@ Anzahlt gesamte Tweets: <!--html_preserve-->
 <tbody>
 <tr style="border-top: 2px solid grey;">
 <td style="border-top: 2px solid grey; border-bottom: 2px solid grey; text-align: center;">
-64106
+68071
 </td>
 </tr>
 </tbody>
@@ -269,7 +269,7 @@ CDU
 schwach
 </td>
 <td style="text-align: left;">
-RT @mawy82: Merkels CDU siegt schwach: Krampf statt Zauber. Ein Kommentar <https://t.co/6Goxj2Xm1x> via @faznet
+Wahlergebnisse, erste Hochrechnung: CDU am stärksten, SPD schwach auf Platz 2, AfD drittstärkste Kraft: <https://t.co/0KDqKUN1nd>
 </td>
 <td style="text-align: left;">
 -0.9206
@@ -286,7 +286,7 @@ CDU
 schwach
 </td>
 <td style="text-align: left;">
-RT @SPIEGEL\_EIL: Erste Prognose: CDU vorn, SPD schwach wie nie, AfD auf Platz drei... <https://t.co/E3CAhYhl4u>
+Erste Prognose zur \#BTW17: Union vorn, SPD schwach wie nie, AfD auf Platz drei <https://t.co/OmAEeQWTes> <https://t.co/3vEdS8NMHv>
 </td>
 <td style="text-align: left;">
 -0.9206
@@ -303,7 +303,7 @@ CDU
 schwach
 </td>
 <td style="text-align: left;">
-Wahlergebnisse, erste Hochrechnung: CDU am stärksten, SPD schwach auf Platz 2, AfD drittstärkste Kraft: <https://t.co/0KDqKUN1nd>
+Erste Prognose: Union vorn, SPD schwach wie nie, AfD auf Platz drei <https://t.co/UqIvJ73NZj> <https://t.co/0f2Vhiqd6v>
 </td>
 <td style="text-align: left;">
 -0.9206
@@ -334,13 +334,13 @@ Erste Prognose: CDU vorn, SPD schwach wie nie, AfD auf Platz drei... <https://t.
 CDU
 </td>
 <td style="text-align: left;">
-drastisch
+schwach
 </td>
 <td style="text-align: left;">
-RT @tagesthemen: Wie stark werden \#CDU und \#SPD abgestraft für \#Groko? Alle schauen auf Genossen aber auch \#Merkel könnte drastisch verlier…
+Bundestagswahl: Rekordverlust für Union, SPD schwach, AfD stark <https://t.co/g6sY59rT2N> \#btw17
 </td>
 <td style="text-align: left;">
--0.351
+-0.9206
 </td>
 </tr>
 <tr>
@@ -351,13 +351,13 @@ RT @tagesthemen: Wie stark werden \#CDU und \#SPD abgestraft für \#Groko? Alle 
 CDU
 </td>
 <td style="border-bottom: 2px solid grey; text-align: left;">
-drastisch
+schwach
 </td>
 <td style="border-bottom: 2px solid grey; text-align: left;">
-Wie stark werden \#CDU und \#SPD abgestraft für \#Groko? Alle schauen auf Genossen aber auch \#Merkel könnte drastisch verlieren \#BTW17
+Starke Verluste für die Union, die SPD weiter schwach, AfD dritte Kraft. \#btw17 <https://t.co/lkY9GU3U4m>
 </td>
 <td style="border-bottom: 2px solid grey; text-align: left;">
--0.351
+-0.9206
 </td>
 </tr>
 </tbody>
@@ -446,7 +446,7 @@ CDU
 gut
 </td>
 <td style="text-align: left;">
-RT @MDRAktuell: In Thüringen holt die CDU alle Wahlkreise bei \#BTW17 - Mit welchem Ergebnis ist hier gut zu sehen: <https://t.co/ylIbgkR2OE>
+In Thüringen holt die CDU alle Wahlkreise bei \#BTW17 - Mit welchem Ergebnis ist hier gut zu sehen: <https://t.co/ylIbgkR2OE>
 </td>
 <td style="text-align: left;">
 0.3716
@@ -460,13 +460,13 @@ RT @MDRAktuell: In Thüringen holt die CDU alle Wahlkreise bei \#BTW17 - Mit wel
 CDU
 </td>
 <td style="text-align: left;">
-gut
+kräftig
 </td>
 <td style="text-align: left;">
-In Thüringen holt die CDU alle Wahlkreise bei \#BTW17 - Mit welchem Ergebnis ist hier gut zu sehen: <https://t.co/ylIbgkR2OE>
+Große Parteien büßen bei \#btw17 kräftig Stimmen ein. So reagieren Union, SPD, AfD, Linke, FDP und Grüne: <https://t.co/1o2ZfMbam3>
 </td>
 <td style="text-align: left;">
-0.3716
+0.2408
 </td>
 </tr>
 <tr>
@@ -480,7 +480,7 @@ CDU
 hoffen
 </td>
 <td style="border-bottom: 2px solid grey; text-align: left;">
-RT @clemenswergin: Wen das Ausland wählen würde: Briten hoffen auf FDP, Macron will Merkel – und Putin? <https://t.co/KCrdnq05Cm> via @welt
+Wen das Ausland wählen würde: Briten hoffen auf FDP, Macron will Merkel – und Putin? <https://t.co/kAM9E34Yet> <https://t.co/8VSwUTrGJ8>
 </td>
 <td style="border-bottom: 2px solid grey; text-align: left;">
 0.2318
@@ -520,13 +520,13 @@ Wert
 SPD
 </td>
 <td style="text-align: left;">
-schwach
+schlecht
 </td>
 <td style="text-align: left;">
-Erste Prognose zur \#BTW17: Union vorn, SPD schwach wie nie, AfD auf Platz drei <https://t.co/OmAEeQWTes> <https://t.co/3vEdS8NMHv>
+Grafiken: Warum schnitt die SPD schlecht ab? <https://t.co/6OlwxLIl9N> \#btw17 \#Umfragen \#Grafiken
 </td>
 <td style="text-align: left;">
--0.9206
+-0.7706
 </td>
 </tr>
 <tr>
@@ -537,13 +537,13 @@ Erste Prognose zur \#BTW17: Union vorn, SPD schwach wie nie, AfD auf Platz drei 
 SPD
 </td>
 <td style="text-align: left;">
-schwach
+knapp
 </td>
 <td style="text-align: left;">
-Erste Prognose: Union vorn, SPD schwach wie nie, AfD auf Platz drei <https://t.co/UqIvJ73NZj> <https://t.co/0f2Vhiqd6v>
+Knapp über 20 Prozent: Stunde Null für die SPD <https://t.co/RiJy2ZmKl6> <https://t.co/FyjggUqlvf>
 </td>
 <td style="text-align: left;">
--0.9206
+-0.2036
 </td>
 </tr>
 <tr>
@@ -554,13 +554,13 @@ Erste Prognose: Union vorn, SPD schwach wie nie, AfD auf Platz drei <https://t.
 SPD
 </td>
 <td style="text-align: left;">
-schwach
+hart
 </td>
 <td style="text-align: left;">
-RT @tagesschau: Starke Verluste für die Union, die SPD weiter schwach, AfD dritte Kraft. \#btw17 <https://t.co/lkY9GU3U4m>
+Sozialdemokraten in der Krise - „Verlieren Charakter einer Volkspartei“: SPD-Mann geht hart mit Partei ins Gericht <https://t.co/eroHmldL2k>
 </td>
 <td style="text-align: left;">
--0.9206
+-0.1483
 </td>
 </tr>
 <tr>
@@ -571,13 +571,13 @@ RT @tagesschau: Starke Verluste für die Union, die SPD weiter schwach, AfD drit
 SPD
 </td>
 <td style="text-align: left;">
-schwach
+hart
 </td>
 <td style="text-align: left;">
-RT @tagesschau: Bundestagswahl: Rekordverlust für Union, SPD schwach, AfD stark <https://t.co/g6sY59rT2N> \#btw17
+SPD in der Krise - „Verlieren Charakter einer Volkspartei“: SPD-Mann geht hart mit Partei ins Gericht <https://t.co/3kLDH5ct02>
 </td>
 <td style="text-align: left;">
--0.9206
+-0.1483
 </td>
 </tr>
 <tr>
@@ -588,13 +588,13 @@ RT @tagesschau: Bundestagswahl: Rekordverlust für Union, SPD schwach, AfD stark
 SPD
 </td>
 <td style="text-align: left;">
-schwach
+hart
 </td>
 <td style="text-align: left;">
-Bundestagswahl: Rekordverlust für Union, SPD schwach, AfD stark <https://t.co/g6sY59rT2N> \#btw17
+Sozialdemokraten in der Krise - „Verlieren Charakter einer Volkspartei“: SPD-Mann geht hart mit Partei ins Gericht <https://t.co/GqhKYFzgIA>
 </td>
 <td style="text-align: left;">
--0.9206
+-0.1483
 </td>
 </tr>
 <tr>
@@ -605,13 +605,13 @@ Bundestagswahl: Rekordverlust für Union, SPD schwach, AfD stark <https://t.co/g
 SPD
 </td>
 <td style="border-bottom: 2px solid grey; text-align: left;">
-schwach
+genau
 </td>
 <td style="border-bottom: 2px solid grey; text-align: left;">
-Starke Verluste für die Union, die SPD weiter schwach, AfD dritte Kraft. \#btw17 <https://t.co/lkY9GU3U4m>
+Die SPD weiß plötzlich genau, was sie will \#btw17 <https://t.co/F46xGc67UB>
 </td>
 <td style="border-bottom: 2px solid grey; text-align: left;">
--0.9206
+0.004
 </td>
 </tr>
 </tbody>
@@ -646,40 +646,6 @@ Wert
 SPD
 </td>
 <td style="text-align: left;">
-kräftig
-</td>
-<td style="text-align: left;">
-RT @MDRAktuell: Große Parteien büßen bei \#btw17 kräftig Stimmen ein. So reagieren Union, SPD, AfD, Linke, FDP und Grüne: <https://t.co/1o2Zf>…
-</td>
-<td style="text-align: left;">
-0.2408
-</td>
-</tr>
-<tr>
-<td style="text-align: left;">
-2
-</td>
-<td style="text-align: left;">
-SPD
-</td>
-<td style="text-align: left;">
-kräftig
-</td>
-<td style="text-align: left;">
-Große Parteien büßen bei \#btw17 kräftig Stimmen ein. So reagieren Union, SPD, AfD, Linke, FDP und Grüne: <https://t.co/1o2ZfMbam3>
-</td>
-<td style="text-align: left;">
-0.2408
-</td>
-</tr>
-<tr>
-<td style="text-align: left;">
-3
-</td>
-<td style="text-align: left;">
-SPD
-</td>
-<td style="text-align: left;">
 freuen
 </td>
 <td style="text-align: left;">
@@ -691,7 +657,7 @@ Paradoxerweise freuen sich die \#SPD-Mitglieder über den Gang in die Opposition
 </tr>
 <tr>
 <td style="text-align: left;">
-4
+2
 </td>
 <td style="text-align: left;">
 SPD
@@ -708,7 +674,7 @@ Wahl-Hammer in Deutschland - Der Moment der Wahrheit: Totenstille bei der SPD - 
 </tr>
 <tr>
 <td style="text-align: left;">
-5
+3
 </td>
 <td style="text-align: left;">
 SPD
@@ -724,6 +690,40 @@ Wahl-Hammer in Deutschland - Der Moment der Wahrheit: Totenstille bei der SPD - 
 </td>
 </tr>
 <tr>
+<td style="text-align: left;">
+4
+</td>
+<td style="text-align: left;">
+SPD
+</td>
+<td style="text-align: left;">
+genau
+</td>
+<td style="text-align: left;">
+Die SPD weiß plötzlich genau, was sie will \#btw17 <https://t.co/F46xGc67UB>
+</td>
+<td style="text-align: left;">
+0.004
+</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+5
+</td>
+<td style="text-align: left;">
+SPD
+</td>
+<td style="text-align: left;">
+überholen
+</td>
+<td style="text-align: left;">
+\#Linke könnte \#SPD in \#Berlin überholen. Auch das \#Tegel-Votum lief für Müller nicht wie gewünscht \#BTW17… <https://t.co/MZ8n3kC75q>
+</td>
+<td style="text-align: left;">
+0.004
+</td>
+</tr>
+<tr>
 <td style="border-bottom: 2px solid grey; text-align: left;">
 6
 </td>
@@ -731,10 +731,10 @@ Wahl-Hammer in Deutschland - Der Moment der Wahrheit: Totenstille bei der SPD - 
 SPD
 </td>
 <td style="border-bottom: 2px solid grey; text-align: left;">
-genau
+gewünscht
 </td>
 <td style="border-bottom: 2px solid grey; text-align: left;">
-Die SPD weiß plötzlich genau, was sie will \#btw17 <https://t.co/F46xGc67UB>
+\#Linke könnte \#SPD in \#Berlin überholen. Auch das \#Tegel-Votum lief für Müller nicht wie gewünscht \#BTW17… <https://t.co/MZ8n3kC75q>
 </td>
 <td style="border-bottom: 2px solid grey; text-align: left;">
 0.004
@@ -791,23 +791,6 @@ verdammt
 FDP
 </td>
 <td style="text-align: left;">
-erschrecken
-</td>
-<td style="text-align: left;">
-RT @heuteshow: Die FDP ist zurück. Erschrecken Sie bitte nicht, wenn Sie Christian Lindner später erstmals in Farbe sehen. \#BTW17
-</td>
-<td style="text-align: left;">
--0.1812
-</td>
-</tr>
-<tr>
-<td style="text-align: left;">
-3
-</td>
-<td style="text-align: left;">
-FDP
-</td>
-<td style="text-align: left;">
 tot
 </td>
 <td style="text-align: left;">
@@ -819,16 +802,33 @@ Auferstehung der FDP - Viele hatten sie für tot erklärt. Parteichef Lindner de
 </tr>
 <tr>
 <td style="text-align: left;">
+3
+</td>
+<td style="text-align: left;">
+FDP
+</td>
+<td style="text-align: left;">
+erklärt
+</td>
+<td style="text-align: left;">
+Auferstehung der FDP - Viele hatten sie für tot erklärt. Parteichef Lindner der FDP wieder Leben eingehaucht <https://t.co/pEVEgeQCp7>
+</td>
+<td style="text-align: left;">
+0.004
+</td>
+</tr>
+<tr>
+<td style="text-align: left;">
 4
 </td>
 <td style="text-align: left;">
 FDP
 </td>
 <td style="text-align: left;">
-begünstigen
+bereit
 </td>
 <td style="text-align: left;">
-RT @kuerzel\_td: Video-Wahlanalyse @handelsblatt – @ThomasSigmundHB sieht FDP und Grüne auf Augenhöhe. Könnte Jamaika begünstigen. <https://t>…
+"Wir sind nicht zum Regieren verdammt, aber wir sind bereit, Verantwortung zu übernehmen"- \#FDP Spitzenkandidat… <https://t.co/eXE7UIjdeZ>
 </td>
 <td style="text-align: left;">
 0.004
@@ -845,7 +845,7 @@ FDP
 erklärt
 </td>
 <td style="text-align: left;">
-Auferstehung der FDP - Viele hatten sie für tot erklärt. Parteichef Lindner der FDP wieder Leben eingehaucht <https://t.co/pEVEgeQCp7>
+Bettina Hesch wählt die \#FDP. Was sie sich für Deutschland wünscht, erklärt sie im Video. \#btw17… <https://t.co/xPHOStIMY4>
 </td>
 <td style="text-align: left;">
 0.004
@@ -859,13 +859,13 @@ Auferstehung der FDP - Viele hatten sie für tot erklärt. Parteichef Lindner de
 FDP
 </td>
 <td style="border-bottom: 2px solid grey; text-align: left;">
-bereit
+stolz
 </td>
 <td style="border-bottom: 2px solid grey; text-align: left;">
-"Wir sind nicht zum Regieren verdammt, aber wir sind bereit, Verantwortung zu übernehmen"- \#FDP Spitzenkandidat… <https://t.co/eXE7UIjdeZ>
+FDP-Bundesvize Kubicki: Bin stolz auf meine Partei <https://t.co/TdxHiL6FKh> <https://t.co/VxQWfdmCKa>
 </td>
 <td style="border-bottom: 2px solid grey; text-align: left;">
-0.004
+0.5161
 </td>
 </tr>
 </tbody>
@@ -917,10 +917,10 @@ FDP-Bundesvize Kubicki: Bin stolz auf meine Partei <https://t.co/TdxHiL6FKh> <h
 FDP
 </td>
 <td style="text-align: left;">
-begünstigen
+erklärt
 </td>
 <td style="text-align: left;">
-RT @kuerzel\_td: Video-Wahlanalyse @handelsblatt – @ThomasSigmundHB sieht FDP und Grüne auf Augenhöhe. Könnte Jamaika begünstigen. <https://t>…
+Auferstehung der FDP - Viele hatten sie für tot erklärt. Parteichef Lindner der FDP wieder Leben eingehaucht <https://t.co/pEVEgeQCp7>
 </td>
 <td style="text-align: left;">
 0.004
@@ -934,10 +934,10 @@ RT @kuerzel\_td: Video-Wahlanalyse @handelsblatt – @ThomasSigmundHB sieht FDP 
 FDP
 </td>
 <td style="text-align: left;">
-erklärt
+bereit
 </td>
 <td style="text-align: left;">
-Auferstehung der FDP - Viele hatten sie für tot erklärt. Parteichef Lindner der FDP wieder Leben eingehaucht <https://t.co/pEVEgeQCp7>
+"Wir sind nicht zum Regieren verdammt, aber wir sind bereit, Verantwortung zu übernehmen"- \#FDP Spitzenkandidat… <https://t.co/eXE7UIjdeZ>
 </td>
 <td style="text-align: left;">
 0.004
@@ -951,10 +951,10 @@ Auferstehung der FDP - Viele hatten sie für tot erklärt. Parteichef Lindner de
 FDP
 </td>
 <td style="text-align: left;">
-bereit
+erklärt
 </td>
 <td style="text-align: left;">
-"Wir sind nicht zum Regieren verdammt, aber wir sind bereit, Verantwortung zu übernehmen"- \#FDP Spitzenkandidat… <https://t.co/eXE7UIjdeZ>
+Bettina Hesch wählt die \#FDP. Was sie sich für Deutschland wünscht, erklärt sie im Video. \#btw17… <https://t.co/xPHOStIMY4>
 </td>
 <td style="text-align: left;">
 0.004
@@ -985,13 +985,13 @@ Auferstehung der FDP - Viele hatten sie für tot erklärt. Parteichef Lindner de
 FDP
 </td>
 <td style="border-bottom: 2px solid grey; text-align: left;">
-erschrecken
+verdammt
 </td>
 <td style="border-bottom: 2px solid grey; text-align: left;">
-RT @heuteshow: Die FDP ist zurück. Erschrecken Sie bitte nicht, wenn Sie Christian Lindner später erstmals in Farbe sehen. \#BTW17
+"Wir sind nicht zum Regieren verdammt, aber wir sind bereit, Verantwortung zu übernehmen"- \#FDP Spitzenkandidat… <https://t.co/eXE7UIjdeZ>
 </td>
 <td style="border-bottom: 2px solid grey; text-align: left;">
--0.1812
+-0.2925
 </td>
 </tr>
 </tbody>
@@ -1065,7 +1065,7 @@ AfD
 besorgt
 </td>
 <td style="text-align: left;">
-RT @DLFNachrichten: Juden in Europa besorgt über Wahlerfolg der AfD. Mehr im Dlf24-Liveblog: <https://t.co/pBRIyDpRXB> \#BTW17
+Juden in Europa besorgt über Wahlerfolg der AfD. Mehr im Dlf24-Liveblog: <https://t.co/pBRIyDpRXB> \#BTW17
 </td>
 <td style="text-align: left;">
 -0.0482
@@ -1079,13 +1079,13 @@ RT @DLFNachrichten: Juden in Europa besorgt über Wahlerfolg der AfD. Mehr im Dl
 AfD
 </td>
 <td style="text-align: left;">
-besorgt
+protestieren
 </td>
 <td style="text-align: left;">
-Juden in Europa besorgt über Wahlerfolg der AfD. Mehr im Dlf24-Liveblog: <https://t.co/pBRIyDpRXB> \#BTW17
+23:24. Noch immer Protestieren am Alexanderplatz hunderte Menschen gegen die AfD \#87Prozent \#btw17 <https://t.co/MfcpiqoYkm>
 </td>
 <td style="text-align: left;">
--0.0482
+-0.0048
 </td>
 </tr>
 <tr>
@@ -1096,13 +1096,13 @@ Juden in Europa besorgt über Wahlerfolg der AfD. Mehr im Dlf24-Liveblog: <https
 AfD
 </td>
 <td style="text-align: left;">
-kalt
+protestieren
 </td>
 <td style="text-align: left;">
-RT @RalphSzepanski: \#btw17 \#zdfwahl -!Demonstranten "heizen" der \#AfD ein. Lässt sie das kalt? Jedenfalls alles friedlich. <https://t.co/ekz>…
+FOCUS Online vor Ort - AfD feiert auf Wahlparty ihren Sieg - draußen protestieren Hunderte gegen die Partei <https://t.co/cIWY9SQN1A>
 </td>
 <td style="text-align: left;">
--0.012
+-0.0048
 </td>
 </tr>
 <tr>
@@ -1116,7 +1116,7 @@ AfD
 protestieren
 </td>
 <td style="border-bottom: 2px solid grey; text-align: left;">
-23:24. Noch immer Protestieren am Alexanderplatz hunderte Menschen gegen die AfD \#87Prozent \#btw17 <https://t.co/MfcpiqoYkm>
+Auch in Köln und Frankfurt am Main protestieren hunderte Menschen gegen die AfD. <https://t.co/XThQyPHYMX> \#btw17
 </td>
 <td style="border-bottom: 2px solid grey; text-align: left;">
 -0.0048
@@ -1239,13 +1239,13 @@ reichlich
 AfD
 </td>
 <td style="border-bottom: 2px solid grey; text-align: left;">
-fleißig
+gefeiert
 </td>
 <td style="border-bottom: 2px solid grey; text-align: left;">
-RT @Rupert74: \#AfD-Offizielle geben schon fleißig Interviews. Sehr siegessicher. Klares Ziel: 3. Kraft im \#Bundestag zu sein \#btw17 @wdr ht…
+Wahlparty der AfD in Berlin - drinnen wird gefeiert, draußen demonstriert. Auch in Köln, Frankfurt und Hamburg komm… <https://t.co/3fwNTSbb7g>
 </td>
 <td style="border-bottom: 2px solid grey; text-align: left;">
-0.3571
+0.3403
 </td>
 </tr>
 </tbody>
@@ -1337,7 +1337,7 @@ CDU
 schwach
 </td>
 <td style="text-align: left;">
-Erste Ergebnisse in \#Oberhausen: SPD mit historischem Tief, CDU schwach, Triumph für die AfD <https://t.co/dzeRRCfktx>
+Hochrechnungen: Union verliert deutlich, SPD schwach wie nie, AfD auf Platz drei <https://t.co/mIsCVptyvd> via @SPIEGELONLINE
 </td>
 <td style="text-align: left;">
 -0.9206
@@ -1354,7 +1354,7 @@ CDU
 schwach
 </td>
 <td style="text-align: left;">
-@MoritzvonUslar aber es ist schwach nach 4 jahren groko mit dem finger auf die cdu zu zeigen \#soreloser\#mschulz
+Erste Ergebnisse in \#Oberhausen: SPD mit historischem Tief, CDU schwach, Triumph für die AfD <https://t.co/dzeRRCfktx>
 </td>
 <td style="text-align: left;">
 -0.9206
@@ -1371,7 +1371,7 @@ CDU
 schwach
 </td>
 <td style="text-align: left;">
-\#annewill \#vonderLeyen ist so schwach+sagt falsche Aussagen über \#AfD. Zeigt wie falsch \#CDU + \#Regierung ist = warum Bleiben?!
+Hochrechnungen: Union verliert deutlich, SPD schwach wie nie, AfD auf Platz drei <https://t.co/RhscPQ21lL> via @SPIEGELONLINE
 </td>
 <td style="text-align: left;">
 -0.9206
@@ -1388,7 +1388,7 @@ CDU
 schwach
 </td>
 <td style="border-bottom: 2px solid grey; text-align: left;">
-@dieLinke @katjakipping Umdenken! CDU hat die Beschreibungen von SPD, Grünen etc. übernommen u. sie damit schwach g… <https://t.co/HvYX9q7PmI>
+@MoritzvonUslar aber es ist schwach nach 4 jahren groko mit dem finger auf die cdu zu zeigen \#soreloser\#mschulz
 </td>
 <td style="border-bottom: 2px solid grey; text-align: left;">
 -0.9206
@@ -1591,7 +1591,7 @@ SPD
 schwach
 </td>
 <td style="text-align: left;">
-Hochrechnungen: Union verliert deutlich, SPD schwach wie nie, AfD auf Platz drei <https://t.co/mIsCVptyvd> via @SPIEGELONLINE
+@extra3 in Deutschland demonstrieren die Leute gegen afd und gehen auf die Straßen und ihr verhöhnt die spd... Schwach...
 </td>
 <td style="text-align: left;">
 -0.9206
@@ -1608,7 +1608,7 @@ SPD
 schwach
 </td>
 <td style="text-align: left;">
-Hochrechnungen: Union verliert deutlich, SPD schwach wie nie, AfD auf Platz drei <https://t.co/RhscPQ21lL> via @SPIEGELONLINE
+@Wintertanne Genau. Wer schwach ist, sollte nicht mitregieren. Dank Schulz ist die SPD nicht nur schwach, sondern vernichtend schwach.
 </td>
 <td style="text-align: left;">
 -0.9206
@@ -1625,7 +1625,7 @@ SPD
 schwach
 </td>
 <td style="text-align: left;">
-Hochrechnungen: Union verliert deutlich, SPD schwach wie nie, AfD auf Platz drei <https://t.co/o0NFvxBlx2> via @SPIEGELONLINE
+@Wintertanne Genau. Wer schwach ist, sollte nicht mitregieren. Dank Schulz ist die SPD nicht nur schwach, sondern vernichtend schwach.
 </td>
 <td style="text-align: left;">
 -0.9206
@@ -1642,7 +1642,7 @@ SPD
 schwach
 </td>
 <td style="border-bottom: 2px solid grey; text-align: left;">
-Hochrechnungen: Union verliert deutlich, SPD schwach wie nie, AfD auf Platz drei <https://t.co/kMHzxGdrNz> via @SPIEGELONLINE
+@Wintertanne Genau. Wer schwach ist, sollte nicht mitregieren. Dank Schulz ist die SPD nicht nur schwach, sondern vernichtend schwach.
 </td>
 <td style="border-bottom: 2px solid grey; text-align: left;">
 -0.9206
@@ -1951,13 +1951,13 @@ Ein "Turnaround" ist der FDP also gelungen? Sprache, bitte, schöne klare Sprach
 FDP
 </td>
 <td style="text-align: left;">
-perfekt
+gelungen
 </td>
 <td style="text-align: left;">
-Die Sitze für AfD und FDP sind perfekt. Bitte so Bleiben. <https://t.co/72EAHXovB7>
+Das Comeback ist gelungen: FDP zieht wieder in den Bundestag \#FDP <https://t.co/2ablFjsawv>
 </td>
 <td style="text-align: left;">
-0.7299
+1
 </td>
 </tr>
 <tr>

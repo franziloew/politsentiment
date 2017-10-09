@@ -29,26 +29,42 @@ names(col) <- levels(tweets$partei)
 
 ### Anzahl der gesamten Tweets nach Datum
 
-Wir betrachten einen Zeitraum von 8h (Sonntag, 24.09.2017, 16Uhr - 24Uhr)
+Wir betrachten einen Zeitraum von 12h (Sonntag, 24.09.2017, 12Uhr - 24Uhr)
 Pünktlich um 18:00 Uhr zu den ersten Hochrechnungen steigt die Anzahl der Tweets rapide an. 
 
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
 # during and after elecction
-tweets1 <- tweets[which(tweets$day == 24),]
-tweets1 <- with(tweets1, tweets1[hour(date) >= 16 & hour(date) <= 23, ])
+tweets <- tweets[which(tweets$day == "24"),]
+tweets <- with(tweets, tweets[hour(date) >= 12 & hour(date) <= 23, ])
 
-ggplot(tweets1, aes(date, fill = partei)) + 
+ggplot(tweets, aes(date, fill = partei)) + 
     geom_histogram(alpha = .8, adjust = .25, binwidth = 500) +
     scale_fill_manual(name = "", values = col) +
     xlab("") +
     ylab("Anzahl der Tweets") +
-    scale_x_datetime(breaks = date_breaks("1 hour"), labels=date_format("%a-%d\n%H:%M", tz="CET"))
+    scale_x_datetime(breaks = date_breaks("2 hour"), labels=date_format("%a-%d\n%H:%M", tz="CET"))
+```
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+# get the tweets that are retweeted 
+tweets$isretweet <- ifelse(grepl('^RT', tweets$text),TRUE,FALSE)
+
+# Extract the retweets
+tweets %>%
+  distinct(text,name, .keep_all = TRUE) %>%
+  filter(isretweet == TRUE) -> rt
+
+# pull the original author's name
+rt$sender <- substr(rt$text, 5, regexpr(':', rt$text) - 1)
+
+# Extract the retweets
+orig <-  tweets[which(tweets$isretweet==FALSE),]
 ```
 
 ## 1. Von welchen Plattformen werden die meisten Tweets gesendet?
 
 ```{r, echo=FALSE, message=FALSE}
-tweets1 %>%
+tweets %>%
   group_by(platform_reduced) %>%
   tally() %>%
   ggplot(aes(reorder(platform_reduced,n), (n/1000))) +
@@ -59,19 +75,6 @@ tweets1 %>%
 ```
 
 ## 2. Wer retweeted wen?
-
-```{r, echo=FALSE, message=FALSE, warning=FALSE}
-# get the tweets that are retweeted 
-tweets1$isretweet <- ifelse(grepl('^RT', tweets1$text),TRUE,FALSE)
-
-# Extract the retweets
-tweets1 %>%
-  distinct(text,name, .keep_all = TRUE) %>%
-  filter(isretweet == TRUE) -> rt
-
-# pull the original author's name
-rt$sender <- substr(rt$text, 5, regexpr(':', rt$text) - 1)
-```
 
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
 col3 = RColorBrewer::brewer.pal(3, 'Paired')
@@ -89,7 +92,7 @@ rtnet <- network(el, directed = TRUE, matrix.type = 'edgelist',
 
 # Get names of only those who were retweeted to keep labeling reasonable
 vlabs <- rtnet %v% 'vertex.names'
-vlabs[degree(rtnet, cmode = 'outdegree') < 5] = NA
+vlabs[degree(rtnet, cmode = 'outdegree') < 8] = NA
 
 par(mar = c(0, 0, 3, 0))
 plot(rtnet, label = vlabs, label.col = "blue",
@@ -102,10 +105,9 @@ plot(rtnet, label = vlabs, label.col = "blue",
 ### Welche Tweets wurden am häufigsten Retweeted?
 
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
-tweets1$retweet_count <- as.numeric(tweets1$retweet_count)
+orig$retweet_count <- as.numeric(orig$retweet_count)
 
-tweets1 %>%
-  filter(isretweet==FALSE) %>%
+orig %>%
   distinct(text, .keep_all = TRUE) %>%
   arrange(desc(retweet_count)) %>%
   select(name, text, retweet_count) %>%
@@ -117,14 +119,14 @@ tweets1 %>%
 
 Anzahlt gesamte Tweets:
 ```{r, echo=FALSE}
-htmlTable(nrow(tweets1))
+htmlTable(nrow(orig))
 ```
 
 ```{r}
-tweets1 %>%
+orig %>%
   group_by(partei) %>%
   tally(sort = TRUE)%>%
-  ggplot(aes(reorder(partei,n), (n/nrow(tweets1)))) +
+  ggplot(aes(reorder(partei,n), (n/nrow(orig)))) +
   xlab("") +
   ylab("%Anteil der Tweets") +
   geom_col(fill = c("darkorchid2","gold","black","red2", "deepskyblue1"), alpha = .8) +
@@ -143,21 +145,19 @@ news.names <- c("FOCUS Online","FOCUS Online TopNews","FOCUS Online Politik",
             "Der Tagesspiegel", "Süddeutsche Zeitung","Stuttgarter Zeitung","Hamburger Abendblatt","Westdeutsche Zeitung","FrankfurterRundschau","ZDF","ZDF heute","tagesschau","tagesthemen","Die Nachrichten","Deutschlandfunk","DW (Deutsch)","PHOENIX","WDR Aktuelle Stunde", "NDR", "NDR.de","NDR Info", "MDR", "MDR Aktuell")
 
 # news sources
-tweets1 %>%
-  #filter(isretweet == FALSE) %>%
+orig %>%
   filter(name %in% news.names) %>%
   distinct(text, .keep_all = TRUE) -> news
 
 # other users
-tweets %>%
+orig %>%
   group_by(platform) %>%
   tally(sort = TRUE) %>%
   top_n(8) -> platform_user
 
 platform_user <- as.vector(platform_user$platform)
 
-tweets1 %>%
-  filter(isretweet == FALSE) %>%
+orig %>%
   filter(!name %in% news.names) %>%
   filter(platform %in% platform_user) %>%
   filter(!(is.na(partei))) %>%
@@ -178,7 +178,7 @@ news %>%
   ggplot(aes(reorder(partei,n), (n/nrow(news)))) +
   xlab("") +
   ylab("%Anteil der Tweets") +
-  geom_col(fill = c("darkorchid2","gold", "black","red2", "deepskyblue1"), alpha = .8) +
+  geom_col(fill = c("darkorchid2","gold","red2", "deepskyblue1", "black"), alpha = .8) +
   coord_flip()
 ```
 
@@ -196,7 +196,7 @@ user %>%
   ggplot(aes(reorder(partei,n), (n/nrow(user)))) +
   xlab("") +
   ylab("%Anteil der Tweets") +
-  geom_col(fill = c("darkorchid2","gold", "black","red2", "deepskyblue1"), alpha = .8) +
+  geom_col(fill = c("darkorchid2","gold","red2", "black", "deepskyblue1"), alpha = .8) +
   coord_flip()
 ```
 
@@ -229,7 +229,7 @@ all <- c(cdu, spd, fdp, linke, afd)
 # Step 2: Corpus and term-docs_cleaned matrix ####
 # create corpus
 corp <- Corpus(VectorSource(all))
-corp <- tm_map(corp, removeWords, c("cdu","spd","fdp","gruene","grüne","linke","dielinke","afd","gen"))
+corp <- tm_map(corp, removeWords, c("cdu","spd","fdp","gruene","linke","dielinke","afd","gen"))
 
 # create term-docs_cleaned matrix
 tdm <- TermDocumentMatrix(corp)
@@ -248,6 +248,7 @@ comparison.cloud(tdm, random.order=FALSE, colors = c("black","red2", "gold","dar
 ### Andere User-Accounts
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
 library(wordcloud)
+
 # WordClouds ####
 # get text
 cdu <- user[which(user$partei=="CDU"),]
@@ -271,7 +272,7 @@ all <- c(cdu, spd, fdp, linke, afd)
 # Step 2: Corpus and term-docs_cleaned matrix ####
 # create corpus
 corp <- Corpus(VectorSource(all))
-corp <- tm_map(corp, removeWords, c("cdu","spd","fdp","gruene","grüne","linke","dielinke","afd"))
+#corp <- tm_map(corp, removeWords, c("cdu","spd","fdp","linke","dielinke","afd"))
 
 # create term-docs_cleaned matrix
 tdm <- TermDocumentMatrix(corp)
@@ -284,7 +285,7 @@ colnames(tdm) <- c("CDU","SPD","FDP","DIE LINKE","AfD")
 
 # Step 3: Plot comparison wordcloud ####
 comparison.cloud(tdm, random.order=FALSE, colors = c("black","red2", "gold","darkorchid2","deepskyblue1"),
-                 scale=c(3,.5), title.size=1.2, max.words=150)
+                 scale=c(3,.5), title.size=1.2, max.words=100)
 ```
 
 ## 5. term frequency - inverse document frequency (tf-idf)
@@ -446,7 +447,7 @@ news.token %>%
   summarise(Sentimentwert = sum(Wert, na.rm = TRUE)) %>%
   ggplot(aes(reorder(partei,Sentimentwert), Sentimentwert)) +
           xlab("") +
-           geom_col(fill = c("red2","black","gold","darkorchid2","deepskyblue1"), alpha = .8)
+           geom_col(fill = c("black","red2","gold","darkorchid2","deepskyblue1"), alpha = .8)
 
 ```
 
