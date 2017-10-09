@@ -24,7 +24,7 @@ theme_set(new = theme_bw())
 set.seed(95616)
 
 # load the dataframe
-tweets <- read_csv("~/GitHub/politsentiment_data/out/tweets_25_30")
+tweets <- read_csv("~/GitHub/politsentiment_data/data/tweets_25_30")
 
 # delete duplicates
 tweets <- distinct(tweets, keep_all=TRUE)
@@ -60,21 +60,7 @@ tweets$platform_reduced <- ifelse(tweets$platform %in% platform_reduced, tweets$
 tweets <- tweets[!grepl("account has been withheld", tweets$text),]
 tweets <- tweets[!grepl("Politisch", tweets$location),]
 
-# Delete tweets about brasilian soccer
-tweets <- tweets[!grepl("que", tweets$text),]
-tweets <- tweets[!grepl("é", tweets$text),]
-tweets <- tweets[!grepl("amo", tweets$text),]
-tweets <- tweets[!grepl("kkkk", tweets$text),]
-tweets <- tweets[!grepl("cólica", tweets$text),]
-tweets <- tweets[!grepl("garganta", tweets$text),]
-tweets <- tweets[!grepl("respeita", tweets$text),]
-tweets <- tweets[!grepl("para", tweets$text),]
-tweets <- tweets[!grepl("alergia", tweets$text),]
-tweets <- tweets[!grepl("mdrrr", tweets$text),]
-tweets <- tweets[!grepl("sinusite", tweets$text),]
-tweets <- tweets[!grepl("#ODA", tweets$text),]
-tweets <- tweets[!grepl("Diego", tweets$text),]
-tweets <- tweets[!grepl("diego", tweets$text),]
+tweets <- tweets[which(tweets$lang == "de"),]
 ```
 
 ```{r, eval=FALSE, include=FALSE}
@@ -99,8 +85,6 @@ tweets$text_cleaned <- clean.text(tweets$text)
 tweets$text_cleaned <- gsub("[\r\n]", "", tweets$text_cleaned)
 
 # get stopwords from online dict and add costum stopwords
-# exceptions   <- c("nicht")
-# my_stopwords <- setdiff(stopwords("german"), exceptions)
 my_stopwords <- c(stopwords("german"), 'rt','https','t','amp','dass','beim','co','via',"live","video","uhr")
 
 # Remove stopwords
@@ -109,7 +93,7 @@ tweets$text_cleaned<- removeWords(tweets$text_cleaned, my_stopwords)
 
 ```{r, eval=FALSE, include=FALSE}
 # Create boolean for party
-cdu <- tweets[grepl(paste(c("cdu","merkel"), collapse = "|"), tweets$text_cleaned),]
+cdu <- tweets[grepl(paste(c("cdu","merkel","union"), collapse = "|"), tweets$text_cleaned),]
 cdu$partei <- "CDU"
 
 spd <- tweets[grepl(paste(c("spd","schulz"),collapse = "|"), tweets$text_cleaned), ]
@@ -118,7 +102,7 @@ spd$partei <- "SPD"
 fdp <- tweets[grepl(paste(c("fdp","lindner"), collapse = "|"), tweets$text_cleaned),]
 fdp$partei <- "FDP"
 
-gruene <- tweets[grepl(paste(c("gruene","ozdemir"), collapse = "|"), tweets$text_cleaned),]
+gruene <- tweets[grepl(paste(c("gruene","grune","gruenen","grunen","ozdemir"), collapse = "|"), tweets$text_cleaned),]
 gruene$partei <- "Die Grünen"
 
 linke <- tweets[grepl(paste(c("linke","wagenknecht"),collapse = "|"), tweets$text_cleaned),]
@@ -131,17 +115,7 @@ tweets <- rbind(cdu,spd,fdp,gruene,linke,afd)
 ```
 
 ```{r, eval=FALSE, include=FALSE}
-# get the tweets that are retweeted 
-tweets$isretweet <- ifelse(grepl('RT', tweets$text),TRUE,FALSE)
-
-# Extract the retweets
-rt <-  tweets[which(tweets$isretweet==TRUE),]
-# pull the original author's name
-rt$sender <- substr(rt$text, 5, regexpr(':', rt$text) - 1)
-```
-
-```{r, eval=FALSE, include=FALSE}
-save(tweets, rt, file = "~/GitHub/politsentiment_data/out/tweets_25_30.rda")
+save(tweets, file = "~/GitHub/politsentiment_data/out/tweets_25_30.rda")
 ```
 
 ```{r, include=FALSE}
@@ -154,24 +128,37 @@ names(col) <- levels(tweets$partei)
 ```
 
 ```{r, include=FALSE}
-tweets <- tweets[which(tweets$day > 25),]
+tweets$day <- as.numeric(tweets$day)
+# subset
+tweets <- filter(tweets, day > 25)
+tweets <- filter(tweets, day < 30)
+```
+
+```{r, include=FALSE}
+# get the tweets that are retweeted 
+tweets$isretweet <- ifelse(grepl('RT', tweets$text),TRUE,FALSE)
+
+# Extract the retweets
+rt <-  tweets[which(tweets$isretweet==TRUE),]
+# pull the original author's name
+rt$sender <- substr(rt$text, 5, regexpr(':', rt$text) - 1)
+
+# Extract the retweets
+orig <-  tweets[which(tweets$isretweet==FALSE),]
 ```
 
 Zeitraum: 
 
 ```{r, echo=FALSE}
-htmlTable(min(tweets$date))
-```
-bis
-```{r, echo=FALSE}
-htmlTable(max(tweets$date))
+htmlTable(max(tweets$date),min(tweets$date), "bis","von","Zeitraum")
 ```
 
-Anzahl gesamter Tweets:
+Anzahl der Tweets (ohne Retweets):
 
 ```{r, echo=FALSE}
-htmlTable(nrow(tweets))
+htmlTable(nrow(orig))
 ```
+
 
 ### Anzahl der gesamten Tweets nach Datum
 
@@ -227,10 +214,9 @@ plot(rtnet, label = vlabs, label.col = "blue",
 ### Welche Tweets wurden am häufigsten Retweeted?
 
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
-tweets$retweet_count <- as.numeric(tweets$retweet_count)
+orig$retweet_count <- as.numeric(orig$retweet_count)
 
-tweets %>%
-  filter(isretweet==FALSE) %>%
+orig %>%
   distinct(text, .keep_all = TRUE) %>%
   arrange(desc(retweet_count)) %>%
   select(name, text, retweet_count) %>%
@@ -252,26 +238,24 @@ news.names <- c("FOCUS Online","FOCUS Online TopNews","FOCUS Online Politik",
             "Der Tagesspiegel", "Süddeutsche Zeitung","Stuttgarter Zeitung","Hamburger Abendblatt","Westdeutsche Zeitung","FrankfurterRundschau", "ZDF","ZDF heute","tagesschau","tagesthemen","Die Nachrichten","Deutschlandfunk","DW (Deutsch)","PHOENIX","WDR Aktuelle Stunde", "NDR", "NDR.de","NDR Info", "MDR", "MDR Aktuell")
 
 # news sources
-tweets %>%
-  filter(isretweet == FALSE) %>%
+orig %>%
   filter(name %in% news.names) -> news
 
 # other users
-tweets %>%
+orig %>%
   group_by(platform) %>%
   tally(sort = TRUE) %>%
   top_n(8) -> platform_user
 
 platform_user <- as.vector(platform_user$platform)
 
-tweets %>%
-  filter(isretweet == FALSE) %>%
+orig %>%
   filter(!name %in% news.names) %>%
   filter(platform %in% platform_user) -> user
 ```
 
 ```{r, echo=FALSE}
-tweets %>%
+orig %>%
   group_by(partei) %>%
   tally(sort = TRUE)%>%
   ggplot(aes(reorder(partei,n), (n/nrow(tweets)))) +
@@ -570,7 +554,7 @@ news.token %>%
   summarise(Sentimentwert = sum(Wert, na.rm = TRUE)) %>%
   ggplot(aes(reorder(partei,Sentimentwert), Sentimentwert)) +
           xlab("") +
-           geom_col(fill = c("deepskyblue1","red2","gold","black"), alpha = .8)
+           geom_col(fill = c("black","deepskyblue1","red2","gold"), alpha = .8)
 
 ```
 
@@ -740,7 +724,7 @@ user.token %>%
   summarise(Sentimentwert = sum(Wert, na.rm = TRUE)) %>%
   ggplot(aes(reorder(partei,Sentimentwert), Sentimentwert)) +
           xlab("") +
-           geom_col(fill = c("deepskyblue1","red2","black","darkorchid2", "limegreen","gold"),alpha=.8) 
+           geom_col(fill = c("deepskyblue1","red2","black","darkorchid2","gold", "limegreen"),alpha=.8) 
 ```
 
 #### Was sind die Tweets mit den negativsten/positivsten Werten?
