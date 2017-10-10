@@ -8,19 +8,21 @@ Im Focus unserer Analyse stehen sowohl die Quantität der Tweets zu den einzelne
 
 Die Untersuchung führen wir mit den Methoden des Text Minings - z.B. Term-Häufigkeit oder Sentiment Analyse - mithilfe der Statistik Software R durch.
 
-## Analysen
+# Analysen
 
 ##### Digitalisierung [26.September - 07.Oktober](01_07_10.md)
 
 ### Bundestagswahl 2017
 
-##### Nach der Wahl [26.September - 29.September](25_30.md)
+##### Nach der Wahl II [01.Oktober - 07.Oktober](01_07_okt.md)
+
+##### Nach der Wahl I [26.September - 29.September](25_30.md)
 
 ##### Wahltag [24.September](election.md)
 
-##### Kurz vor der Wahl [18.September - 23.September](18_23_09.md)
+##### Vor der Wahl II [18.September - 23.September](18_23_09.md)
 
-##### 1 Woche vor der Wahl [08.September - 15.September](17_09.md)
+##### Vor der Wahl I [08.September - 15.September](17_09.md)
 
 ##### TV Duell [09. September](TVDuell.md)
 
@@ -42,7 +44,7 @@ Wir betrachten, in wievielen Tweets eine Partei im Verhältnis zu der gesamten A
 Wir unterscheiden zwischen:
 
   a) Großen News-Portalen.
-  Viele davon verwenden mehrere Twitter-Accounts.
+  Viele davon verwenden mehrere Twitter-Accounts (und wir haben versucht alle zu berücksichtigen)
   FOCUS Online, FAZ, SPIEGEL ONLINE, stern, BILD, N24, ntv, WELT, ZEIT ONLINE, Handelsblatt, BuzzFeedNewsDE, BW Breaking News, taz, HuffPost Deutschland, MEEDIA, Der Tagesspiegel, Süddeutsche Zeitung, Stuttgarter Zeitung, Hamburger Abendblatt, Westdeutsche Zeitung, FrankfurterRundschau, ZDF, tagesschau, tagesthemen, Die Nachrichten, Deutschlandfunk, DW (Deutsch), PHOENIX, WDR Aktuelle Stunde, NDR, MDR
 
   b) Anderer User - Accounts.
@@ -50,6 +52,8 @@ Wir unterscheiden zwischen:
 
 ### 4. Wordclouds
 Welche Wörter werden am häufigsten in Verbindung mit den Parteien getweetet? Zur Visualisierung der am häufigsten verwendeten Wörter in Bezug auf eine Partei, erstellen wir eine Wordcloud.
+
+Da für einige Datensätze nur eine vergleichsweise geringe Anzahl an Tweets zu den Parteien Bündnis 90/Die Grünen und DIE LINKE vorliegen, werden diese nicht bei allen Wordclouds mit einbezogen um so die Übersichtlichkeit zu erhalten.
 
 ### 5. term frequency - inverse document frequency (tf-idf)
 
@@ -63,16 +67,16 @@ In den folgenden Abbildungen, sind die Wörter (sog. unique terms) mit den höch
 
 ### 6. Sentiment Analyse
 
-Interessant ist zunächst der Blick auf die am meisten verwendeten positiven und negativen Wörter um die Stimmung oder Emotionen (Sentiment) im Zusammenhang mit den Parteien auszulesen.
+Mittels der Sentimentanalyse versucht man, Stimmungen zu analysieren um zu erkennen, ob ein Tweet eine positive oder negative Stimmung oder Meinung ausdrückt.
 
-Ungewichtete Sentiment-Analyse: Zunächst betrachten wir, ob und welche Sentiment-Wörter auftauchen ohne diesen Wörtern den Sentiment-Wert zuzuweisen.  
+Interessant ist zunächst der Blick auf die am meisten verwendeten positiven und negativen Wörter um die Stimmung oder Emotionen (Sentiment) im Zusammenhang mit den Parteien auszulesen (ungewichtete Sentiment-Analyse)   
 
 Gewichtete Sentiment-Analyse: Bei der gewichten Analyse wird den einzelnen "Sentiment" Worten ein Wert zugewiesen. Der Score gibt den Wert an, der sich aus der Summe der zugewiesenen Werte der positiven und negativen Wörter ergibt.
 
 Das Prinzip dieser Analyse im einfachsten Fall so:
 
 Für jedes Wort im Text:
-  Überprüfe, ob das Wort im Lexikon existiert.
+  Überprüfe, ob das Wort im Lexikon\* existiert.
   Wenn JA, dann:
     Weise dem Wort den Sentiment-Wert aus dem Lexikon zu UND
     Addiere diesen Wert zu dem Sentimentwert des Dokuments.
@@ -81,6 +85,6 @@ Für jedes Wort im Text:
 
   Gebe die Summenwerte pro Sentiment (z.b. negativ, positiv)
 
-Wir verwenden das Lexikon der [Leipzig Corpora Collection](http://wortschatz.uni-leipzig.de/de/download).
+Hierbei sei darauf hingewiesen, dass der Wert für eine Partei nicht unbedingt die Stimmung bzgl. dieser Partei widergibt. Vielmehr ist der Wert ein Indikator dafür, wie die Wortwahl in Zusammenhang mit dieser Partei ist. Da viele Tweets aber mehr als eine Partei beinhalten, kann sich ein negatives oder ein positives Wort auch auf eine andere Partei beziehen. Interessant ist in diesem Hinblick dann ein Blick in die Tweets mit den entsprechend negativsten oder positivsten Werten.
 
-\* Leider gibt es Probleme bei der Datengenerierung für Die Grünen, weshalb diese bei der einigen Analysen nicht beachtet werden können.
+\* Wir verwenden das Lexikon der [Leipzig Corpora Collection](http://wortschatz.uni-leipzig.de/de/download).
