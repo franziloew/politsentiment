@@ -69,7 +69,7 @@ Anzahl gesamter Tweets im Zeitraum:
 htmlTable(nrow(orig))
 ```
 
-## Wie prominent wurde das Thema im betrachteten Zeitraum besprochen?
+## Wie prominent wurde "Digitalisierung" im Vergleich zu anderen Themen besprochen?
 
 ```{r, include=FALSE}
 orig$thema <- ifelse(grepl("digi", orig$text_cleaned), "Digital", "Andere Themen")
