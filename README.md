@@ -10,6 +10,8 @@ Die Untersuchung führen wir mit den Methoden des Text Minings - z.B. Term-Häuf
 
 ## Analysen
 
+##### Digitalisierung [26.September - 07.Oktober](01_07_10.md)
+
 ### Bundestagswahl 2017
 
 ##### Nach der Wahl [26.September - 29.September](25_30.md)
