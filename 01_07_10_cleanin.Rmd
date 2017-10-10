@@ -125,5 +125,3 @@ tweets <- rbind(cdu,spd,fdp,gruene,linke,afd)
 ```{r, eval=FALSE, include=FALSE}
 save(tweets, file = "~/GitHub/politsentiment_data/out/tweets_01_07_10.rda")
 ```
-
-
