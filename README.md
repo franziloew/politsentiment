@@ -8,6 +8,8 @@ Im Focus unserer Analyse stehen sowohl die Quantität der Tweets zu den einzelne
 
 Die Untersuchung führen wir mit den Methoden des Text Minings - z.B. Term-Häufigkeit oder Sentiment Analyse - mithilfe der Statistik Software R durch.
 
+Alle Rmd Files (R-Code) sind [hier](https://github.com/franziloew/politsentiment/tree/master/Rmd_files) zu finden
+
 # Analysen
 
 ##### Digitalisierung [26.September - 07.Oktober](01_07_10.md)
