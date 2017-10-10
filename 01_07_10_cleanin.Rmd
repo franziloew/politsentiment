@@ -1,0 +1,129 @@
+---
+title: "01.10.2017 - 07.10.2017"
+#author: "Franziska Löw"
+date: "`r format(Sys.Date())`"
+output: github_document
+---
+
+Wie sieht die politische Stimmung bei Twitter in den Tagen nach der Bundestagswahl aus? 
+
+Bei der folgenden Analyse soll vor allem das Thema Digitalisierung im Vordergrund stehen. Im Index der EU-Kommission für Digitale Wirtschaft - dem [Digital Economy and Society Index (DESI)](https://ec.europa.eu/digital-single-market/en/news/digital-economy-and-society-index-desi-2017) -  belegt die [Bundesrepublik](http://ec.europa.eu/newsroom/document.cfm?doc_id=43012) 2017 nur Platz 11. Wie wird die künftige Bundesregierung mit dem Thema Digitalisierung umgehen? Auch wenn das Thema Digitalsierung im Wahlkampf eher untergeordnet schien, wurden unter anderem folgende Punkte im Zusammenhang mit der Digitalisierung besonders diskutiert:
+
+1. Förderung der Breitbandversorgung für ein schnelleres Netz.
+2. Schaffung eines öffentlichen Postens, der das Thema Digitalisierung vorantreibt/vertritt. Sei es in Form eines Digitalministeriums (wie es bspw. von der FDP gefordert wurde), oder durch ein "Staatsminister für Digitalpolitik" im Kanzleramt (wie es die CDU vorsieht).
+3. [Wirtschaftspolitischer und kartellrechtlicher Umgang mit digitalen Unternehmen](http://www.m-blog.info/2016/11/nachlese-zum-interdisziplinaeren-workshop-big-data-datenschutz-und-regulierung-in-hamburg/)
+
+Welche Parteien werden am häufigsten in einem Tweet mit "Digitalisierung" genannt? Und worum geht es in diesen Tweets? Wir gewohnt, haben wir alle Tweets gesammelt, die mindestens eine der Bundestagsparteien nennen. Aus diesem Korpus haben wir alle Tweets gefiltert, die das Wort "Digitalisierung" enthalten.
+\*Erläuterungen zu den einzelnen Analyseschritten finden Sie [hier](https://franziloew.github.io/politsentiment/)
+
+```{r, include=FALSE}
+# load the packages
+libs <- c("tidytext","tidyr","readr","lubridate","tm","stm","data.table",
+          "plyr","dplyr","class","knitr","kableExtra","cldr",'network', 'sna', 'qdap',
+          "htmlTable","ggplot2","gridExtra","jsonlite","stringr","scales")
+lapply(libs, library, character.only = TRUE)
+```
+
+```{r, eval=FALSE, include=FALSE}
+rm(list=ls())
+
+theme_set(new = theme_bw())
+set.seed(95616)
+
+# load the dataframe
+tweets <- read_csv("~/GitHub/politsentiment_data/data/tweets_01_07_10")
+
+# delete duplicates
+tweets <- distinct(tweets, keep_all=TRUE)
+
+# Format the time Variable
+tweets$day <- substr(tweets$date,9,10)
+tweets$time <- substr(tweets$date, 12,19)
+tweets$date <- paste(tweets$day,10,2017,tweets$time)
+tweets$date <- as.POSIXct(tweets$date, format ="%d %m %Y %H:%M:%S")
+tweets$date <- tweets$date + hours(2)
+
+# Partei as Factor
+tweets$partei <- as.factor(tweets$partei)
+```
+
+```{r, eval=FALSE, message=FALSE, warning=FALSE, include=FALSE}
+tweets$platform <- substr(tweets$source, regexpr('>', tweets$source) + 1, 
+       regexpr('</', tweets$source) -1)
+
+tweets %>%
+  group_by(platform) %>%
+  tally(sort = TRUE) %>%
+  top_n(19) -> platform_reduced
+
+platform_reduced <- as.vector(platform_reduced$platform)
+
+tweets$platform_reduced <- ifelse(tweets$platform %in% platform_reduced, tweets$platform, "Other")
+```
+
+```{r, eval=FALSE, include=FALSE}
+# Delete accounts that has been withheld
+tweets <- tweets[!grepl("account has been withheld", tweets$text),]
+tweets <- tweets[!grepl("Politisch", tweets$location),]
+
+tweets <- tweets[which(tweets$lang == "de"),]
+```
+
+```{r, eval=FALSE, include=FALSE}
+clean.text = function(x)
+{
+  x = tolower(x)
+  x = gsub(" ?(f|ht)(tp)(s?)(://)(.*)[.|/](.*)", " ", x)
+  x = gsub("&amp", " ", x)
+  x = gsub("(RT|via)((?:\\b\\W*@\\w+)+)", "", x)
+  x = gsub("@\\w+", " ", x)
+  x = gsub("[ \t]{2,}", "", x)
+  x = gsub("^\\s+|\\s+$", "", x) 
+  x = gsub( "[^[:alnum:]]", " ", x)
+  x = gsub( "[[:digit:]]", " ", x)
+  return(x)
+}
+
+# apply function to the "orig" dataframe
+tweets$text_cleaned <- clean.text(tweets$text)
+
+# remove just new-line tag from plain-tex for better readability
+tweets$text_cleaned <- gsub("[\r\n]", "", tweets$text_cleaned)
+
+# get stopwords from online dict and add costum stopwords
+# exceptions   <- c("nicht")
+# my_stopwords <- setdiff(stopwords("german"), exceptions)
+my_stopwords <- c(stopwords("german"), 'rt','https','t','amp','dass','beim','co','via',"live","video","uhr")
+
+# Remove stopwords
+tweets$text_cleaned<- removeWords(tweets$text_cleaned, my_stopwords)
+```
+
+```{r, eval=FALSE, include=FALSE}
+# Create boolean for party
+cdu <- tweets[grepl(paste(c("cdu","merkel","union"), collapse = "|"), tweets$text_cleaned),]
+cdu$partei <- "CDU"
+
+spd <- tweets[grepl(paste(c("spd","schulz"),collapse = "|"), tweets$text_cleaned), ]
+spd$partei <- "SPD"
+
+fdp <- tweets[grepl(paste(c("fdp","lindner"), collapse = "|"), tweets$text_cleaned),]
+fdp$partei <- "FDP"
+
+gruene <- tweets[grepl(paste(c("gruene","gruenen","grunen", "grune","ozdemir"), collapse = "|"), tweets$text_cleaned),]
+gruene$partei <- "Die Grünen"
+
+linke <- tweets[grepl(paste(c("linke","wagenknecht"),collapse = "|"), tweets$text_cleaned),]
+linke$partei <- "DIE LINKE"
+
+afd <- tweets[grepl(paste(c("afd","gauland"),collapse = "|"), tweets$text_cleaned),]
+afd$partei <- "AfD"
+
+tweets <- rbind(cdu,spd,fdp,gruene,linke,afd)
+```
+
+```{r, eval=FALSE, include=FALSE}
+save(tweets, file = "~/GitHub/politsentiment_data/out/tweets_01_07_10.rda")
+```
+
+

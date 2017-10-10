@@ -1,0 +1,311 @@
+---
+title: "Politische Stimmung auf Twitter zum Thema Digitalisierung"
+#author: "Franziska Löw"
+date: "`r format(Sys.Date())`"
+output: github_document
+---
+
+Wie sieht die politische Stimmung bei Twitter in den Tagen nach der Bundestagswahl aus? 
+
+Bei der folgenden Analyse soll vor allem das Thema Digitalisierung im Vordergrund stehen. Im Index der EU-Kommission für Digitale Wirtschaft - dem [Digital Economy and Society Index (DESI)](https://ec.europa.eu/digital-single-market/en/news/digital-economy-and-society-index-desi-2017) -  belegt die [Bundesrepublik](http://ec.europa.eu/newsroom/document.cfm?doc_id=43012) 2017 nur Platz 11. Wie wird die künftige Bundesregierung mit dem Thema Digitalisierung umgehen? Auch wenn das Thema Digitalsierung im Wahlkampf eher untergeordnet schien, wurden unter anderem folgende Punkte im Zusammenhang mit der Digitalisierung besonders diskutiert:
+
+1. Förderung der Breitbandversorgung für ein schnelleres Netz.
+2. Schaffung eines öffentlichen Postens, der das Thema Digitalisierung vorantreibt/vertritt. Sei es in Form eines Digitalministeriums (wie es bspw. von der FDP gefordert wurde), oder durch ein "Staatsminister für Digitalpolitik" im Kanzleramt (wie es die CDU vorsieht).
+3. [Wirtschaftspolitischer und kartellrechtlicher Umgang mit digitalen Unternehmen](http://www.m-blog.info/2016/11/nachlese-zum-interdisziplinaeren-workshop-big-data-datenschutz-und-regulierung-in-hamburg/)
+
+Welche Parteien werden am häufigsten in einem Tweet mit "Digitalisierung" genannt? Und worum geht es in diesen Tweets? Wir gewohnt, haben wir alle Tweets gesammelt, die mindestens eine der Bundestagsparteien nennen. Aus diesem Korpus haben wir alle Tweets gefiltert, die das Wort "Digital" (und "Neuland") enthalten.
+
+\*Erläuterungen zu den einzelnen Analyseschritten finden Sie [hier](https://franziloew.github.io/politsentiment/)
+
+```{r, include=FALSE}
+# load the packages
+libs <- c("tidytext","tidyr","readr","lubridate","tm","stm","data.table",
+          "plyr","dplyr","class","knitr","kableExtra","cldr",'network', 'sna', 'qdap',
+          "htmlTable","ggplot2","gridExtra","jsonlite","stringr","scales")
+lapply(libs, library, character.only = TRUE)
+```
+
+```{r, include=FALSE}
+rm(list = ls())
+load(file = "~/GitHub/politsentiment_data/out/tweets_01_07_10.rda")
+# get the tweets that are retweeted 
+tweets$isretweet <- ifelse(grepl('RT', tweets$text),TRUE,FALSE)
+# rename df
+tweets1 <- tweets
+
+load(file = "~/GitHub/politsentiment_data/out/tweets_25_30.rda")
+
+tweets <- rbind(tweets, tweets1)
+
+# Set Color
+col <- c("deepskyblue1", "black","limegreen", "darkorchid2","gold", "red2")
+names(col) <- levels(tweets$partei)
+```
+
+```{r, include=FALSE}
+# Extract the retweets
+rt <-  tweets[which(tweets$isretweet==TRUE),]
+# pull the original author's name
+rt$sender <- substr(rt$text, 5, regexpr(':', rt$text) - 1)
+
+# Extract the retweets
+orig <-  tweets[which(tweets$isretweet==FALSE),]
+```
+
+### Zeitraum: 
+
+```{r, echo=FALSE}
+htmlTable(max(tweets$date),min(tweets$date), "bis","von","Zeitraum")
+```
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+ggplot(tweets, aes(date, fill = partei)) + 
+    geom_histogram(alpha = .7, adjust = .25, binwidth = 500) +
+    scale_fill_manual(values = col) +
+    xlab("") +
+    ylab("Anzahl der Tweets") +
+    scale_x_datetime(breaks = date_breaks("24 hour"), labels=date_format("%a-%d\n%H:%M", tz="CET"))
+```
+
+Anzahl gesamter Tweets im Zeitraum:
+
+```{r, echo=FALSE}
+htmlTable(nrow(orig))
+```
+
+## Wie prominent wurde das Thema im betrachteten Zeitraum besprochen?
+
+```{r, include=FALSE}
+orig$thema <- ifelse(grepl("digi", orig$text_cleaned), "Digital", "Andere Themen")
+orig$thema <- ifelse(grepl("flüchtling", orig$text_cleaned), "Flüchtlinge", orig$thema)
+orig$thema <- ifelse(grepl("islam", orig$text_cleaned), "Islam", orig$thema)
+orig$thema <- ifelse(grepl(paste(c("jamaica","jamaika","koalition"), collapse = "|"), orig$text_cleaned), "Koalition", orig$thema)
+orig$thema <- ifelse(grepl("minister", orig$text_cleaned), "Ministerien", orig$thema)
+orig$thema <- ifelse(grepl("osten", orig$text_cleaned), "Osten", orig$thema)
+```
+
+```{r, echo=FALSE}
+orig %>%
+  group_by(thema) %>%
+  tally(sort = TRUE)%>%
+  ggplot(aes(reorder(thema,n),(n/nrow(orig)))) +
+  xlab("") +
+  ylab("%Anteil der Tweets") +
+  geom_col() +
+  coord_flip()
+```
+
+## Welche Parteien werden am häufigsten in Zusammenhang mit "Digital" verwendet?
+
+Anteil der Nennung einer Partei in einem Tweet im gesamten "Digital"-Korpus. 
+
+```{r, include=FALSE}
+digi <- orig[grepl(paste(c("digi","neuland"),collapse="|"), orig$text_cleaned),]
+```
+
+```{r, echo=FALSE}
+digi %>%
+  group_by(partei) %>%
+  tally(sort = TRUE)%>%
+  ggplot(aes(reorder(partei,n),(n/nrow(digi)))) +
+  xlab("") +
+  ylab("%Anteil der Tweets") +
+  #geom_col() +
+  geom_col(fill = c("limegreen", "darkorchid2", "deepskyblue1","black","red2","gold"), alpha = .8) +
+  coord_flip()
+```
+
+Zum Vergleich: Der Anteil der Nennung einer Partei im gesamten Korpus:
+
+```{r, echo=FALSE}
+orig %>%
+  group_by(partei) %>%
+  tally(sort = TRUE)%>%
+  ggplot(aes(reorder(partei,n),(n/nrow(orig)))) +
+  xlab("") +
+  ylab("%Anteil der Tweets") +
+  #geom_col() +
+  geom_col(fill = c("limegreen","darkorchid2","gold","black","red2","deepskyblue1"), alpha = .8) +
+  coord_flip()
+```
+
+## Wordclouds
+
+Welche Wörter werden im Zusammenhang mit der Digitalisierung verwendet?
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+library(wordcloud)
+# WordClouds ####
+# get text
+cdu <- digi[which(digi$partei == "CDU"),]
+spd <- digi[which(digi$partei == "SPD"),]
+fdp <- digi[which(digi$partei == "FDP"),]
+#linke <- digi[which(digi$partei == "DIE LINKE"),]
+afd <- digi[which(digi$partei == "AfD"),]
+
+# Join texts in a vector 
+cdu <- paste(cdu$text_cleaned, collapse = " ")
+spd <- paste(spd$text_cleaned, collapse = " ")
+fdp <- paste(fdp$text_cleaned, collapse = " ")
+#linke <- paste(linke$text_cleaned, collapse = " ")
+afd <- paste(afd$text_cleaned, collapse = " ")
+
+# put everything in a single vector
+all <- c(cdu, spd, fdp, afd)
+
+# Step 2: Corpus and term-docs_cleaned matrix ####
+# create corpus
+corp <- Corpus(VectorSource(all))
+corp <- tm_map(corp, removeWords, c("cdu","spd","fdp","gruene","grüne","linke","dielinke","afd","gen"))
+
+# create term-docs_cleaned matrix
+tdm <- TermDocumentMatrix(corp, control = list(wordLengths=c(0,Inf)))
+
+# convert as matrix
+tdm <- as.matrix(tdm)
+
+# add column names
+colnames(tdm) <- c("CDU","SPD","FDP","AfD")
+
+# Step 3: Plot comparison wordcloud ####
+comparison.cloud(tdm, random.order=FALSE, colors = c("black","red2", "gold","deepskyblue1"), scale=c(3,.5),
+                 title.size=1.5, max.words=100)
+```
+
+Da sowohl Bündis90/Die Grünen, als auch DIE LINKE nicht viele Tweets in zusammenhang mit "Digitalisierung" aufweisen, haben die Wordclouds zu diesen beiden Parteien eher wenig Aussagekraft. Der Vollständigkeit halber hier trotzdem aufgeführt:
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+# WordClouds ####
+# get text
+linke <- digi[which(digi$partei == "DIE LINKE"),]
+gruene <- digi[which(digi$partei == "Die Grünen"),]
+
+# Join texts in a vector 
+linke <- paste(linke$text_cleaned, collapse = " ")
+gruene <- paste(gruene$text_cleaned, collapse = " ")
+
+# put everything in a single vector
+all <- c(linke, gruene)
+
+# Step 2: Corpus and term-docs_cleaned matrix ####
+# create corpus
+corp <- Corpus(VectorSource(all))
+corp <- tm_map(corp, removeWords, c("cdu","spd","fdp","gruene","grüne","linke","dielinke","afd","gen"))
+
+# create term-docs_cleaned matrix
+tdm <- TermDocumentMatrix(corp, control = list(wordLengths=c(0,Inf)))
+
+# convert as matrix
+tdm <- as.matrix(tdm)
+
+# add column names
+colnames(tdm) <- c("DIE LINKE", "Die Grünen")
+
+# Step 3: Plot comparison wordcloud ####
+comparison.cloud(tdm, random.order=FALSE, colors = c("darkorchid2", "limegreen"), scale=c(3,.5),
+                 title.size=1.5, max.words=100)
+```
+
+```{r, include=FALSE}
+token <- digi %>%
+  group_by(partei) %>%
+  filter(!partei == "Die Grünen") %>%
+    filter(!partei == "DIE LINKE") %>%
+  unnest_tokens(word, text_cleaned) %>%
+  count(partei, word, sort = TRUE)  %>%
+  bind_tf_idf(word, partei, n) %>%
+  arrange(desc(tf_idf))
+```
+
+### Nachrichtendienste
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+ignore <- c("cdu","spd","fdp")
+
+plot_tweets <- token %>%
+  arrange(desc(tf_idf)) %>%
+  mutate(word = factor(word, levels = rev(unique(word))))
+
+plot_tweets %>% 
+  filter(!word %in% ignore) %>%
+  top_n(4) %>%
+  ggplot(aes(reorder(word, tf_idf), tf_idf, fill = partei)) +
+  geom_col(alpha=.9) +
+  scale_fill_manual(name="", values=c("deepskyblue1","black","gold","red2")) +
+  labs(x = NULL, y = "tf-idf") +
+  coord_flip()
+```
+
+## Welche Tweets werden am häufigsten retweeted?
+
+### CDU
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+digi %>%
+  filter(partei == "CDU") %>%
+  distinct(text, .keep_all=TRUE) %>%
+  arrange(desc(retweet_count)) %>%
+  top_n(5) %>%
+  select(name, text, retweet_count) %>%
+  head() %>%
+  htmlTable(align="l")
+```
+
+### SPD
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+digi %>%
+  filter(partei == "SPD") %>%
+  distinct(text, .keep_all=TRUE) %>%
+  arrange(desc(retweet_count)) %>%
+  top_n(5) %>%
+  select(name, text, retweet_count) %>%
+  head() %>%
+  htmlTable(align="l")
+```
+
+### FDP
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+digi %>%
+  filter(partei == "FDP") %>%
+  distinct(text, .keep_all=TRUE) %>%
+  arrange(desc(retweet_count)) %>%
+  top_n(5) %>%
+  select(name, text, retweet_count) %>%
+  head() %>%
+  htmlTable(align="l")
+```
+
+### AfD
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+digi %>%
+  filter(partei == "AfD") %>%
+  distinct(text, .keep_all=TRUE) %>%
+  arrange(desc(retweet_count)) %>%
+  top_n(5) %>%
+  select(name, text, retweet_count) %>%
+  head() %>%
+  htmlTable(align="l")
+```
+
+### Die Linke
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+digi %>%
+  filter(partei == "DIE LINKE") %>%
+  distinct(text, .keep_all=TRUE) %>%
+  arrange(desc(retweet_count)) %>%
+  top_n(5) %>%
+  select(name, text, retweet_count) %>%
+  head() %>%
+  htmlTable(align="l")
+```
+
+### Bündnis 90/Die Grünen
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+digi %>%
+  filter(partei == "Die Grünen") %>%
+  distinct(text, .keep_all=TRUE) %>%
+  arrange(desc(retweet_count)) %>%
+  top_n(5) %>%
+  select(name, text, retweet_count) %>%
+  head() %>%
+  htmlTable(align="l")
+```

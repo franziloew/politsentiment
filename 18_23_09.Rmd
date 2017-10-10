@@ -133,6 +133,13 @@ col <- c("deepskyblue1", "black", "darkorchid2","gold", "red2")
 names(col) <- levels(tweets$partei)
 ```
 
+```{r, include=FALSE}
+tweets$day <- as.numeric(tweets$day)
+# subset
+tweets <- filter(tweets, day > 18)
+tweets <- filter(tweets, day < 23)
+```
+
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
 # get the tweets that are retweeted 
 tweets$isretweet <- ifelse(grepl('^RT', tweets$text),TRUE,FALSE)
@@ -147,13 +154,6 @@ rt$sender <- substr(rt$text, 5, regexpr(':', rt$text) - 1)
 
 # Extract the retweets
 orig <-  tweets[which(tweets$isretweet==FALSE),]
-```
-
-```{r, include=FALSE}
-tweets$day <- as.numeric(tweets$day)
-# subset
-tweets <- filter(tweets, day > 18)
-tweets <- filter(tweets, day < 23)
 ```
 
 Zeitraum: 
@@ -212,7 +212,7 @@ rtnet <- network(el, directed = TRUE, matrix.type = 'edgelist',
 
 # Get names of only those who were retweeted to keep labeling reasonable
 vlabs <- rtnet %v% 'vertex.names'
-vlabs[degree(rtnet, cmode = 'outdegree') < 4] = NA
+vlabs[degree(rtnet, cmode = 'outdegree') < 6] = NA
 
 par(mar = c(0, 0, 3, 0))
 plot(rtnet, label = vlabs, label.col = "blue",
