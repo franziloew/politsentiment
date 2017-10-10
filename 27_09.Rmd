@@ -374,14 +374,6 @@ oeffis.token <- oeffis %>%
   arrange(desc(tf_idf))
 ```
 
-Die Idee des tf-idf Wertes (aus dem englischen "term frequency - inverse document frequency") ist es, die Relevanz eines Wortes für den Inhalt eines Dokumentes (in diesem Fall einer Partei) zu finden - und zwar im Vergleich zu allen im Korpus enthaltenen Dokumente (bzw. Parteien).
-
-TF(t) = (Anzahl von Term t pro Patei) / (Anzahl aller Terme pro Partei)
-
-IDF(t) = log\_e(Anzahl aller Parteien / Anzahl von Parteien, die den Term t enthalten)
-
-In den folgenden Abbildungen, sind die Wörter (sog. unique terms) mit den höchsten tf-idf Werten pro Partei aufgelistet. Diese Wörter werden sind also im Zusammenhang einer Partei am "relevantesten". 
-
 #### Private Accounts
 
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}

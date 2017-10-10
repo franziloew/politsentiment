@@ -54,10 +54,6 @@ orig <-  tweets[which(tweets$isretweet==FALSE),]
 
 ### Zeitraum: 
 
-```{r, echo=FALSE}
-htmlTable(max(tweets$date),min(tweets$date), "bis","von","Zeitraum")
-```
-
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
 ggplot(tweets, aes(date, fill = partei)) + 
     geom_histogram(alpha = .7, adjust = .25, binwidth = 500) +
@@ -172,7 +168,7 @@ comparison.cloud(tdm, random.order=FALSE, colors = c("black","red2", "gold","dee
                  title.size=1.5, max.words=100)
 ```
 
-Da sowohl Bündis90/Die Grünen, als auch DIE LINKE nicht viele Tweets in zusammenhang mit "Digitalisierung" aufweisen, haben die Wordclouds zu diesen beiden Parteien eher wenig Aussagekraft. Der Vollständigkeit halber hier trotzdem aufgeführt:
+Da sowohl Bündis90/Die Grünen, als auch DIE LINKE nicht viele Tweets im Zusammenhang mit "Digitalisierung" aufweisen, haben die Wordclouds zu diesen beiden Parteien eher wenig Aussagekraft. Der Vollständigkeit halber hier trotzdem aufgeführt:
 
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
 # WordClouds ####
@@ -217,7 +213,7 @@ token <- digi %>%
   arrange(desc(tf_idf))
 ```
 
-### Nachrichtendienste
+## term frequency - inverse document frequency (tf-idf)
 
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
 ignore <- c("cdu","spd","fdp")
