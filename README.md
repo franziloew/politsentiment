@@ -10,7 +10,7 @@ Die Untersuchung führen wir mit den Methoden des Text Minings - z.B. Term-Häuf
 
 Alle Rmd Files (R-Code) sind [hier](https://github.com/franziloew/politsentiment/tree/master/Rmd_files) zu finden
 
-# Analysen
+# A) Analysen
 
 ##### Digitalisierung [26.September - 07.Oktober](01_07_10.md)
 
@@ -28,7 +28,7 @@ Alle Rmd Files (R-Code) sind [hier](https://github.com/franziloew/politsentiment
 
 ##### TV Duell [09. September](TVDuell.md)
 
-## Die Analyse erfolgt in den folgenden schritten:
+# B) Analyse-Schritte
 
 ### 1. Von welchen Plattformen werden die meisten Tweets gesendet?
 Einige Parteien, Newsportale, etc. benutzen autmatisierte Twitter-Bots um bestimmte Themen viraler zu machen. Wir schauen uns an, von welchen Plattformen die Tweets abgesetzt wurde.
