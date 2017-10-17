@@ -1,5 +1,5 @@
 ---
-title: "01.10.2017 - 07.10.2017"
+title: "Politische Stimmung im Social Web vor der Bundestagswahl 2017"
 #author: "Franziska Löw"
 date: "`r format(Sys.Date())`"
 output: github_document
@@ -7,33 +7,38 @@ output: github_document
 
 ```{r, include=FALSE}
 # load the packages
-libs <- c("tidytext","tidyr","readr","lubridate","tm","stm","data.table",
+libs <- c("feather", "tidytext","tidyr","readr","lubridate","tm","stm",
           "plyr","dplyr","class","knitr","kableExtra","cldr",'network', 'sna', 'qdap',
           "htmlTable","ggplot2","gridExtra","jsonlite","stringr","scales")
 lapply(libs, library, character.only = TRUE)
 ```
 
-```{r, eval=FALSE, include=FALSE}
+```{r, include=FALSE}
 rm(list=ls())
 
 theme_set(new = theme_bw())
 set.seed(95616)
 
 # load the dataframe
-tweets <- read_csv("~/GitHub/politsentiment_data/data/tweets_01_07_10")
+tweets <- read_csv("~/GitHub/politsentiment_data/data/tweets_18_24")
+afd1 <- read_csv("~/GitHub/politsentiment_data/data/tweets_18_24_afd2")
+afd2 <- read_csv("~/GitHub/politsentiment_data/data/tweets_18_24_afd3")
+
+tweets <- rbind(tweets, afd1, afd2)
+rm(afd1,afd2)
 
 # delete duplicates
-tweets <- distinct(tweets, keep_all=TRUE)
+tweets <- distinct(tweets)
 
 # Format the time Variable
 tweets$day <- substr(tweets$date,9,10)
 tweets$time <- substr(tweets$date, 12,19)
-tweets$date <- paste(tweets$day,10,2017,tweets$time)
+tweets$date <- paste(tweets$day,09,2017,tweets$time)
 tweets$date <- as.POSIXct(tweets$date, format ="%d %m %Y %H:%M:%S")
 tweets$date <- tweets$date + hours(2)
 ```
 
-```{r, eval=FALSE, message=FALSE, warning=FALSE, include=FALSE}
+```{r, include=FALSE}
 tweets$platform <- substr(tweets$source, regexpr('>', tweets$source) + 1, 
        regexpr('</', tweets$source) -1)
 
@@ -47,12 +52,11 @@ platform_reduced <- as.vector(platform_reduced$platform)
 tweets$platform_reduced <- ifelse(tweets$platform %in% platform_reduced, tweets$platform, "Other")
 ```
 
-```{r, eval=FALSE, include=FALSE}
-# Delete accounts that has been withheld
-tweets <- tweets[!grepl("account has been withheld", tweets$text),]
-tweets <- tweets[!grepl("Politisch", tweets$location),]
-
-tweets <- tweets[which(tweets$lang == "de"),]
+```{r, include=FALSE}
+tweets %>%
+  filter(!grepl("account has been withheld", tweets$text)) %>%
+  filter(!grepl("Politisch", tweets$text)) %>%
+  filter(lang=="de") -> tweets
 ```
 
 ```{r, eval=FALSE, include=FALSE}
@@ -109,5 +113,5 @@ tweets <- rbind(cdu,spd,fdp,gruene,linke,afd)
 ```
 
 ```{r, eval=FALSE, include=FALSE}
-save(tweets, file = "~/GitHub/politsentiment_data/out/tweets_01_07_10.rda")
+save(tweets, file = "~/GitHub/politsentiment_data/out/tweets_18_24.rda")
 ```

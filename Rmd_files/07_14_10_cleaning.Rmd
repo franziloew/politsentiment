@@ -13,14 +13,14 @@ libs <- c("tidytext","tidyr","readr","lubridate","tm","stm","data.table",
 lapply(libs, library, character.only = TRUE)
 ```
 
-```{r, eval=FALSE, include=FALSE}
+```{r, include=FALSE}
 rm(list=ls())
 
 theme_set(new = theme_bw())
 set.seed(95616)
 
 # load the dataframe
-tweets <- read_csv("~/GitHub/politsentiment_data/data/tweets_01_07_10")
+tweets <- read_csv("~/GitHub/politsentiment_data/data/tweets_07_14_10")
 
 # delete duplicates
 tweets <- distinct(tweets, keep_all=TRUE)
@@ -31,9 +31,10 @@ tweets$time <- substr(tweets$date, 12,19)
 tweets$date <- paste(tweets$day,10,2017,tweets$time)
 tweets$date <- as.POSIXct(tweets$date, format ="%d %m %Y %H:%M:%S")
 tweets$date <- tweets$date + hours(2)
+
 ```
 
-```{r, eval=FALSE, message=FALSE, warning=FALSE, include=FALSE}
+```{r, include=FALSE}
 tweets$platform <- substr(tweets$source, regexpr('>', tweets$source) + 1, 
        regexpr('</', tweets$source) -1)
 
@@ -47,7 +48,7 @@ platform_reduced <- as.vector(platform_reduced$platform)
 tweets$platform_reduced <- ifelse(tweets$platform %in% platform_reduced, tweets$platform, "Other")
 ```
 
-```{r, eval=FALSE, include=FALSE}
+```{r, include=FALSE}
 # Delete accounts that has been withheld
 tweets <- tweets[!grepl("account has been withheld", tweets$text),]
 tweets <- tweets[!grepl("Politisch", tweets$location),]
@@ -85,6 +86,7 @@ my_stopwords <- c(stopwords("german"), 'rt','https','t','amp','dass','beim','co'
 tweets$text_cleaned<- removeWords(tweets$text_cleaned, my_stopwords)
 ```
 
+
 ```{r, eval=FALSE, include=FALSE}
 # Create boolean for party
 cdu <- tweets[grepl(paste(c("cdu","merkel","union"), collapse = "|"), tweets$text_cleaned),]
@@ -108,6 +110,6 @@ afd$partei <- "AfD"
 tweets <- rbind(cdu,spd,fdp,gruene,linke,afd)
 ```
 
-```{r, eval=FALSE, include=FALSE}
-save(tweets, file = "~/GitHub/politsentiment_data/out/tweets_01_07_10.rda")
+```{r}
+save(tweets, file = "~/GitHub/politsentiment_data/out/tweets_07_14_10.rda")
 ```

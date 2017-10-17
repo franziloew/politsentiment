@@ -19,11 +19,8 @@ lapply(libs, library, character.only = TRUE)
 rm(list = ls())
 load(file = "~/GitHub/politsentiment_data/out/tweets_18_24.rda")
 
-tweets %>%
-  filter(!partei == "Die Grünen") -> tweets
-
 # Set Color
-col <- c("deepskyblue1", "black", "darkorchid2","gold", "red2")
+col <- c("deepskyblue1", "black","limegreen", "darkorchid2","gold", "red2")
 names(col) <- levels(tweets$partei)
 ```
 
@@ -111,7 +108,7 @@ orig %>%
   distinct(text, .keep_all = TRUE) %>%
   arrange(desc(retweet_count)) %>%
   select(name, text, retweet_count) %>%
-  head() %>%
+  top_n(10) %>%
   htmlTable(align = "l")
 ```
 
@@ -122,14 +119,14 @@ Anzahlt gesamte Tweets:
 htmlTable(nrow(orig))
 ```
 
-```{r}
+```{r, echo=FALSE}
 orig %>%
   group_by(partei) %>%
   tally(sort = TRUE)%>%
   ggplot(aes(reorder(partei,n), (n/nrow(orig)))) +
   xlab("") +
   ylab("%Anteil der Tweets") +
-  geom_col(fill = c("darkorchid2","gold","black","red2", "deepskyblue1"), alpha = .8) +
+  geom_col(fill = c("darkorchid2","limegreen", "gold","black","red2", "deepskyblue1"), alpha = .8) +
   coord_flip()
 ```
 
@@ -178,7 +175,7 @@ news %>%
   ggplot(aes(reorder(partei,n), (n/nrow(news)))) +
   xlab("") +
   ylab("%Anteil der Tweets") +
-  geom_col(fill = c("darkorchid2","gold","red2", "deepskyblue1", "black"), alpha = .8) +
+  geom_col(fill = c("darkorchid2","limegreen", "gold","red2","deepskyblue1", "black"), alpha = .8) +
   coord_flip()
 ```
 
@@ -196,7 +193,7 @@ user %>%
   ggplot(aes(reorder(partei,n), (n/nrow(user)))) +
   xlab("") +
   ylab("%Anteil der Tweets") +
-  geom_col(fill = c("darkorchid2","gold","red2", "black", "deepskyblue1"), alpha = .8) +
+  geom_col(fill = c("darkorchid2","limegreen", "gold","red2", "black", "deepskyblue1"), alpha = .8) +
   coord_flip()
 ```
 
@@ -211,7 +208,7 @@ library(wordcloud)
 cdu <- news[which(news$partei=="CDU"),]
 spd <- news[which(news$partei=="SPD"),]
 fdp <- news[which(news$partei=="FDP"),]
-#gruene <- news[which(news$partei=="Die Gruenen"),]
+gruene <- news[which(news$partei=="Die Grünen"),]
 linke <- news[which(news$partei=="DIE LINKE"),]
 afd <- news[which(news$partei=="AfD"),]
 
@@ -219,17 +216,19 @@ afd <- news[which(news$partei=="AfD"),]
 cdu <- paste(cdu$text_cleaned, collapse = " ")
 spd <- paste(spd$text_cleaned, collapse = " ")
 fdp <- paste(fdp$text_cleaned, collapse = " ")
-#gruene <- paste(gruene$text_cleaned, collapse = " ")
+gruene <- paste(gruene$text_cleaned, collapse = " ")
 linke <- paste(linke$text_cleaned, collapse = " ")
 afd <- paste(afd$text_cleaned, collapse = " ")
 
 # put everything in a single vector
-all <- c(cdu, spd, fdp, linke, afd)
+all <- c(cdu, spd, fdp,gruene, linke, afd)
+
+ignore <- paste(c("cdu","bündnis", "spd","fdp","gruene","grüne","grünen", "linke","dielinke","afd","gen","merkel","schulz","csu","union"), collapse = "|")
+all <- gsub(ignore,"", all)
 
 # Step 2: Corpus and term-docs_cleaned matrix ####
 # create corpus
 corp <- Corpus(VectorSource(all))
-corp <- tm_map(corp, removeWords, c("cdu","spd","fdp","gruene","linke","dielinke","afd","gen"))
 
 # create term-docs_cleaned matrix
 tdm <- TermDocumentMatrix(corp)
@@ -238,10 +237,10 @@ tdm <- TermDocumentMatrix(corp)
 tdm <- as.matrix(tdm)
 
 # add column names
-colnames(tdm) <- c("CDU","SPD","FDP","DIE LINKE","AfD")
+colnames(tdm) <- c("CDU","SPD","FDP","Die Grünen", "DIE LINKE","AfD")
 
 # Step 3: Plot comparison wordcloud ####
-comparison.cloud(tdm, random.order=FALSE, colors = c("black","red2", "gold","darkorchid2","deepskyblue1"), scale=c(3,.5),
+comparison.cloud(tdm, random.order=FALSE, colors = c("black","red2", "gold","limegreen", "darkorchid2","deepskyblue1"), scale=c(3,.5),
                  title.size=1.2, max.words=150)
 ```
 
@@ -254,7 +253,7 @@ library(wordcloud)
 cdu <- user[which(user$partei=="CDU"),]
 spd <- user[which(user$partei=="SPD"),]
 fdp <- user[which(user$partei=="FDP"),]
-#gruene <- user[which(user$partei=="Die Gruenen"),]
+gruene <- user[which(user$partei=="Die Grünen"),]
 linke <- user[which(user$partei=="DIE LINKE"),]
 afd <- user[which(user$partei=="AfD"),]
 
@@ -262,17 +261,19 @@ afd <- user[which(user$partei=="AfD"),]
 cdu <- paste(cdu$text_cleaned, collapse = " ")
 spd <- paste(spd$text_cleaned, collapse = " ")
 fdp <- paste(fdp$text_cleaned, collapse = " ")
-#gruene <- paste(gruene$text_cleaned, collapse = " ")
+gruene <- paste(gruene$text_cleaned, collapse = " ")
 linke <- paste(linke$text_cleaned, collapse = " ")
 afd <- paste(afd$text_cleaned, collapse = " ")
 
 # put everything in a single vector
-all <- c(cdu, spd, fdp, linke, afd)
+all <- c(cdu, spd, fdp, gruene, linke, afd)
+
+ignore <- paste(c("cdu","bündnis", "spd","fdp","gruene","grüne","grünen", "linke","dielinke","afd","gen","merkel","schulz","csu","union"), collapse = "|")
+all <- gsub(ignore,"", all)
 
 # Step 2: Corpus and term-docs_cleaned matrix ####
 # create corpus
 corp <- Corpus(VectorSource(all))
-#corp <- tm_map(corp, removeWords, c("cdu","spd","fdp","linke","dielinke","afd"))
 
 # create term-docs_cleaned matrix
 tdm <- TermDocumentMatrix(corp)
@@ -281,10 +282,10 @@ tdm <- TermDocumentMatrix(corp)
 tdm <- as.matrix(tdm)
 
 # add column names
-colnames(tdm) <- c("CDU","SPD","FDP","DIE LINKE","AfD")
+colnames(tdm) <- c("CDU","SPD","FDP","Die Grünen", "DIE LINKE","AfD")
 
 # Step 3: Plot comparison wordcloud ####
-comparison.cloud(tdm, random.order=FALSE, colors = c("black","red2", "gold","darkorchid2","deepskyblue1"),
+comparison.cloud(tdm, random.order=FALSE, colors = c("black","red2", "gold","limegreen", "darkorchid2","deepskyblue1"),
                  scale=c(3,.5), title.size=1.2, max.words=100)
 ```
 
@@ -308,7 +309,7 @@ news.token <- news %>%
 ### Nachrichtendienste
 
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
-ignore <- c("cdu","afd", "spd","ticker","hateine","geschrieb")
+ignore <- c("cdu","spd","fdp","linke","linken","dielinke","gruene", "grüne","grünen", "merkel","schulz","lindner","union")
 
 plot_tweets <- news.token %>%
   arrange(desc(tf_idf)) %>%
@@ -318,17 +319,17 @@ plot_tweets %>%
   filter(!word %in% ignore) %>%
   top_n(5) %>%
   ggplot(aes(reorder(word, tf_idf), tf_idf, fill = partei)) +
-  geom_col(alpha=.9) +
+  geom_col(alpha=.9, show.legend = FALSE) +
   scale_fill_manual(name="", values=col) +
   labs(x = NULL, y = "tf-idf") +
+    facet_wrap(~partei, ncol = 2, scales = "free") +
   coord_flip()
 ```
 
 ### Andere User-Accounts
 
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
-ignore <- c("fdp","cdu","spd")
-#col <- c("deepskyblue1", "black","limegreen", "darkorchid2","gold", "red2")
+ignore <- c("cdu","spd","fdp","linke","linken","dielinke","gruene", "grüne","grünen", "merkel","schulz","lindner","union","wagenknecht")
 
 plot_tweets <- user.token %>%
   arrange(desc(tf_idf)) %>%
@@ -338,9 +339,10 @@ plot_tweets %>%
   filter(!word %in% ignore) %>%
   top_n(5) %>%
   ggplot(aes(reorder(word, tf_idf), tf_idf, fill = partei)) +
-  geom_col(alpha = .9) +
+  geom_col(alpha = .9, show.legend = FALSE) +
   scale_fill_manual(name="", values=col) +
   labs(x = NULL, y = "tf-idf") +
+      facet_wrap(~partei, ncol = 2, scales = "free") +
   coord_flip()
 ```
 
@@ -411,9 +413,10 @@ plot_sentiments <- negative_sentiments %>%
 plot_sentiments %>% 
   top_n(10) %>%
   ggplot(aes(reorder(word, count), count, fill = partei)) +
-  geom_col(alpha = .8) +
+  geom_col(alpha = .8, show.legend = FALSE) +
   scale_fill_manual(values=c("deepskyblue1", "black","gold", "red2")) +
   labs(x = NULL, y = "negative term count") +
+      facet_wrap(~partei, ncol = 2, scales = "free") +
   coord_flip()
 ```
 
@@ -427,11 +430,12 @@ plot_sentiments <- positive_sentiments %>%
   mutate(word = factor(word, levels = rev(unique(word))))
 
 plot_sentiments %>% 
-  top_n(6) %>%
+  top_n(5) %>%
   ggplot(aes(reorder(word, count), count, fill = partei)) +
-  geom_col(alpha = .9) +
+  geom_col(alpha = .9, show.legend = FALSE) +
   scale_fill_manual(values=col) +
   labs(x = NULL, y = "positive term count") +
+      facet_wrap(~partei, ncol = 2, scales = "free") +
   coord_flip()
 ```
 
@@ -447,7 +451,7 @@ news.token %>%
   summarise(Sentimentwert = sum(Wert, na.rm = TRUE)) %>%
   ggplot(aes(reorder(partei,Sentimentwert), Sentimentwert)) +
           xlab("") +
-           geom_col(fill = c("black","red2","gold","darkorchid2","deepskyblue1"), alpha = .8)
+           geom_col(fill = c("black","red2","limegreen","gold","darkorchid2","deepskyblue1"), alpha = .8)
 
 ```
 
@@ -578,11 +582,12 @@ plot_sentiments <- negative_sentiments %>%
   mutate(word = factor(word, levels = rev(unique(word))))
 
 plot_sentiments %>% 
-  top_n(10) %>%
+  top_n(6) %>%
   ggplot(aes(reorder(word, count), count, fill = partei)) +
-  geom_col(alpha = .9) +
+  geom_col(alpha = .9, show.legend = FALSE) +
   scale_fill_manual(name = "", values=col) +
   labs(x = NULL, y = "negative term count") +
+        facet_wrap(~partei, ncol = 2, scales = "free") +
   coord_flip()
 ```
 
@@ -598,9 +603,10 @@ plot_sentiments <- positive_sentiments %>%
 plot_sentiments %>% 
   top_n(10) %>%
   ggplot(aes(reorder(word, count), count, fill = partei)) +
-  geom_col(alpha=.9) +
+  geom_col(alpha=.9, show.legend = FALSE) +
   scale_fill_manual(name="",values=col) +
   labs(x = NULL, y = "positive term count") +
+        facet_wrap(~partei, ncol = 2, scales = "free") +
   coord_flip()
 ```
 
@@ -617,7 +623,7 @@ user.token %>%
   summarise(Sentimentwert = sum(Wert, na.rm = TRUE)) %>%
   ggplot(aes(reorder(partei,Sentimentwert), Sentimentwert)) +
           xlab("") +
-           geom_col(fill = c("deepskyblue1","black","red2","darkorchid2","gold"),alpha=.8) 
+           geom_col(fill = c("deepskyblue1","black","darkorchid2","limegreen","red2", "gold"),alpha=.8) 
 ```
 
 #### Was sind die Tweets mit den negativsten/positivsten Werten?

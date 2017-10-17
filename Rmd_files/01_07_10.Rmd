@@ -28,14 +28,16 @@ lapply(libs, library, character.only = TRUE)
 ```{r, include=FALSE}
 rm(list = ls())
 load(file = "~/GitHub/politsentiment_data/out/tweets_01_07_10.rda")
-# get the tweets that are retweeted 
-tweets$isretweet <- ifelse(grepl('RT', tweets$text),TRUE,FALSE)
 # rename df
 tweets1 <- tweets
 
 load(file = "~/GitHub/politsentiment_data/out/tweets_25_30.rda")
+tweets2 <- tweets
 
-tweets <- rbind(tweets, tweets1)
+load(file = "~/GitHub/politsentiment_data/out/tweets_07_14_10.rda")
+
+tweets <- rbind(tweets, tweets1, tweets2)
+tweets <- unique(tweets, by=c("text","partei"))
 
 # Set Color
 col <- c("deepskyblue1", "black","limegreen", "darkorchid2","gold", "red2")
@@ -43,6 +45,9 @@ names(col) <- levels(tweets$partei)
 ```
 
 ```{r, include=FALSE}
+# get the tweets that are retweeted 
+tweets$isretweet <- ifelse(grepl('RT', tweets$text),TRUE,FALSE)
+
 # Extract the retweets
 rt <-  tweets[which(tweets$isretweet==TRUE),]
 # pull the original author's name
@@ -60,7 +65,7 @@ ggplot(tweets, aes(date, fill = partei)) +
     scale_fill_manual(values = col) +
     xlab("") +
     ylab("Anzahl der Tweets") +
-    scale_x_datetime(breaks = date_breaks("24 hour"), labels=date_format("%a-%d\n%H:%M", tz="CET"))
+    scale_x_datetime(breaks = date_breaks("24 hour"), labels=date_format("%a\n%d", tz="CET"))
 ```
 
 Anzahl gesamter Tweets im Zeitraum:
@@ -107,7 +112,7 @@ digi %>%
   xlab("") +
   ylab("%Anteil der Tweets") +
   #geom_col() +
-  geom_col(fill = c("limegreen", "darkorchid2", "deepskyblue1","black","red2","gold"), alpha = .8) +
+  geom_col(fill = c("darkorchid2","limegreen", "deepskyblue1","gold","black","red2"), alpha = .8) +
   coord_flip()
 ```
 
@@ -121,7 +126,7 @@ orig %>%
   xlab("") +
   ylab("%Anteil der Tweets") +
   #geom_col() +
-  geom_col(fill = c("limegreen","darkorchid2","gold","black","red2","deepskyblue1"), alpha = .8) +
+  geom_col(fill = c("darkorchid2","gold","limegreen","red2","black","deepskyblue1"), alpha = .8) +
   coord_flip()
 ```
 
@@ -133,80 +138,48 @@ Welche Wörter werden im Zusammenhang mit der Digitalisierung verwendet?
 library(wordcloud)
 # WordClouds ####
 # get text
-cdu <- digi[which(digi$partei == "CDU"),]
-spd <- digi[which(digi$partei == "SPD"),]
-fdp <- digi[which(digi$partei == "FDP"),]
-#linke <- digi[which(digi$partei == "DIE LINKE"),]
-afd <- digi[which(digi$partei == "AfD"),]
+cdu <- digi[which(digi$partei=="CDU"),]
+spd <- digi[which(digi$partei=="SPD"),]
+fdp <- digi[which(digi$partei=="FDP"),]
+gruene <- digi[which(digi$partei=="Die Grünen"),]
+#linke <- digi[which(digi$partei=="DIE LINKE"),]
+afd <- digi[which(digi$partei=="AfD"),]
 
 # Join texts in a vector 
 cdu <- paste(cdu$text_cleaned, collapse = " ")
 spd <- paste(spd$text_cleaned, collapse = " ")
 fdp <- paste(fdp$text_cleaned, collapse = " ")
+gruene <- paste(gruene$text_cleaned, collapse = " ")
 #linke <- paste(linke$text_cleaned, collapse = " ")
 afd <- paste(afd$text_cleaned, collapse = " ")
 
 # put everything in a single vector
-all <- c(cdu, spd, fdp, afd)
+all <- c(cdu, spd, fdp, gruene, afd)
+
+ignore <- paste(c("cdu","bündnis", "spd","fdp","gruene","grüne","grünen", "linke","dielinke","afd","gen","merkel","schulz","csu","union"), collapse = "|")
+all <- gsub(ignore,"", all)
 
 # Step 2: Corpus and term-docs_cleaned matrix ####
 # create corpus
 corp <- Corpus(VectorSource(all))
-corp <- tm_map(corp, removeWords, c("cdu","spd","fdp","gruene","grüne","linke","dielinke","afd","gen"))
 
 # create term-docs_cleaned matrix
-tdm <- TermDocumentMatrix(corp, control = list(wordLengths=c(0,Inf)))
+tdm <- TermDocumentMatrix(corp)
 
 # convert as matrix
 tdm <- as.matrix(tdm)
 
 # add column names
-colnames(tdm) <- c("CDU","SPD","FDP","AfD")
+colnames(tdm) <- c("CDU","SPD","FDP","Die Grünen","AfD")
 
 # Step 3: Plot comparison wordcloud ####
-comparison.cloud(tdm, random.order=FALSE, colors = c("black","red2", "gold","deepskyblue1"), scale=c(3,.5),
-                 title.size=1.5, max.words=100)
-```
-
-Da sowohl Bündis90/Die Grünen, als auch DIE LINKE nicht viele Tweets im Zusammenhang mit "Digitalisierung" aufweisen, haben die Wordclouds zu diesen beiden Parteien eher wenig Aussagekraft. Der Vollständigkeit halber hier trotzdem aufgeführt:
-
-```{r, echo=FALSE, message=FALSE, warning=FALSE}
-# WordClouds ####
-# get text
-linke <- digi[which(digi$partei == "DIE LINKE"),]
-gruene <- digi[which(digi$partei == "Die Grünen"),]
-
-# Join texts in a vector 
-linke <- paste(linke$text_cleaned, collapse = " ")
-gruene <- paste(gruene$text_cleaned, collapse = " ")
-
-# put everything in a single vector
-all <- c(linke, gruene)
-
-# Step 2: Corpus and term-docs_cleaned matrix ####
-# create corpus
-corp <- Corpus(VectorSource(all))
-corp <- tm_map(corp, removeWords, c("cdu","spd","fdp","gruene","grüne","linke","dielinke","afd","gen"))
-
-# create term-docs_cleaned matrix
-tdm <- TermDocumentMatrix(corp, control = list(wordLengths=c(0,Inf)))
-
-# convert as matrix
-tdm <- as.matrix(tdm)
-
-# add column names
-colnames(tdm) <- c("DIE LINKE", "Die Grünen")
-
-# Step 3: Plot comparison wordcloud ####
-comparison.cloud(tdm, random.order=FALSE, colors = c("darkorchid2", "limegreen"), scale=c(3,.5),
-                 title.size=1.5, max.words=100)
+comparison.cloud(tdm, random.order=FALSE, colors = c("black","red2", "gold","limegreen","deepskyblue1"), scale=c(3,.5),
+                 title.size=1.2, max.words=150)
 ```
 
 ```{r, include=FALSE}
 token <- digi %>%
   group_by(partei) %>%
-  filter(!partei == "Die Grünen") %>%
-    filter(!partei == "DIE LINKE") %>%
   unnest_tokens(word, text_cleaned) %>%
   count(partei, word, sort = TRUE)  %>%
   bind_tf_idf(word, partei, n) %>%
@@ -224,11 +197,12 @@ plot_tweets <- token %>%
 
 plot_tweets %>% 
   filter(!word %in% ignore) %>%
-  top_n(4) %>%
+  top_n(6) %>%
   ggplot(aes(reorder(word, tf_idf), tf_idf, fill = partei)) +
-  geom_col(alpha=.9) +
-  scale_fill_manual(name="", values=c("deepskyblue1","black","gold","red2")) +
+  geom_col(alpha=.9,show.legend = FALSE) +
+  scale_fill_manual(name="", values=c("deepskyblue1","black","limegreen","darkorchid2", "gold","red2")) +
   labs(x = NULL, y = "tf-idf") +
+    facet_wrap(~partei, ncol = 2, scales = "free") +
   coord_flip()
 ```
 

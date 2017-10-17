@@ -17,119 +17,12 @@ libs <- c("feather", "tidytext","tidyr","readr","lubridate","tm","stm",
 lapply(libs, library, character.only = TRUE)
 ```
 
-```{r, eval=FALSE, include=FALSE}
-rm(list=ls())
-
-theme_set(new = theme_bw())
-set.seed(95616)
-
-# load the dataframe
-tweets <- read_csv("~/GitHub/politsentiment_data/data/tweets_18_24")
-afd1 <- read_csv("~/GitHub/politsentiment_data/data/tweets_18_24_afd2")
-afd2 <- read_csv("~/GitHub/politsentiment_data/data/tweets_18_24_afd3")
-
-tweets <- rbind(tweets, afd1, afd2)
-rm(afd1,afd2)
-
-# delete duplicates
-tweets <- distinct(tweets)
-
-# Format the time Variable
-tweets$day <- substr(tweets$date,9,10)
-tweets$time <- substr(tweets$date, 12,19)
-tweets$date <- paste(tweets$day,09,2017,tweets$time)
-tweets$date <- as.POSIXct(tweets$date, format ="%d %m %Y %H:%M:%S")
-tweets$date <- tweets$date + hours(2)
-```
-
-```{r, eval=FALSE, include=FALSE}
-tweets$platform <- substr(tweets$source, regexpr('>', tweets$source) + 1, 
-       regexpr('</', tweets$source) -1)
-
-tweets %>%
-  group_by(platform) %>%
-  tally(sort = TRUE) %>%
-  top_n(19) -> platform_reduced
-
-platform_reduced <- as.vector(platform_reduced$platform)
-
-tweets$platform_reduced <- ifelse(tweets$platform %in% platform_reduced, tweets$platform, "Other")
-```
-
-```{r, eval=FALSE, include=FALSE}
-# Delete accounts that has been withheld
-tweets <- tweets[!grepl("account has been withheld", tweets$text),]
-tweets <- tweets[!grepl("Politisch", tweets$location),]
-
-tweets <- tweets[which(tweets$lang == "de"),]
-```
-
-```{r, eval=FALSE, include=FALSE}
-clean.text = function(x)
-{
-  x = tolower(x)
-  x = gsub(" ?(f|ht)(tp)(s?)(://)(.*)[.|/](.*)", " ", x)
-  x = gsub("&amp", " ", x)
-  x = gsub("(RT|via)((?:\\b\\W*@\\w+)+)", "", x)
-  x = gsub("@\\w+", " ", x)
-  x = gsub("[ \t]{2,}", "", x)
-  x = gsub("^\\s+|\\s+$", "", x) 
-  x = gsub( "[^[:alnum:]]", " ", x)
-  x = gsub( "[[:digit:]]", " ", x)
-  return(x)
-}
-
-# apply function to the "orig" dataframe
-tweets$text_cleaned <- clean.text(tweets$text)
-
-# remove just new-line tag from plain-tex for better readability
-tweets$text_cleaned <- gsub("[\r\n]", "", tweets$text_cleaned)
-
-# get stopwords from online dict and add costum stopwords
-# exceptions   <- c("nicht")
-# my_stopwords <- setdiff(stopwords("german"), exceptions)
-my_stopwords <- c(stopwords("german"), 'rt','https','t','amp','dass','beim','co','via',"live","video","uhr")
-
-# Remove stopwords
-tweets$text_cleaned<- removeWords(tweets$text_cleaned, my_stopwords)
-```
-
-```{r, eval=FALSE, include=FALSE}
-# Create boolean for party
-cdu <- tweets[grepl(paste(c("cdu","merkel","union"), collapse = "|"), tweets$text_cleaned),]
-cdu$partei <- "CDU"
-
-spd <- tweets[grepl(paste(c("spd","schulz"),collapse = "|"), tweets$text_cleaned), ]
-spd$partei <- "SPD"
-
-fdp <- tweets[grepl(paste(c("fdp","lindner"), collapse = "|"), tweets$text_cleaned),]
-fdp$partei <- "FDP"
-
-gruene <- tweets[grepl(paste(c("gruene","grune","gruenen","grunen","ozdemir"), collapse = "|"), tweets$text_cleaned),]
-gruene$partei <- "Die Grünen"
-
-linke <- tweets[grepl(paste(c("linke","wagenknecht"),collapse = "|"), tweets$text_cleaned),]
-linke$partei <- "DIE LINKE"
-
-afd <- tweets[grepl(paste(c("afd","gauland"),collapse = "|"), tweets$text_cleaned),]
-afd$partei <- "AfD"
-
-tweets <- rbind(cdu,spd,fdp,gruene,linke,afd)
-```
-
-```{r, eval=FALSE, include=FALSE}
-save(tweets, file = "~/GitHub/politsentiment_data/out/tweets_18_24.rda")
-```
-
 ```{r, include=FALSE}
 rm(list = ls())
 load(file = "~/GitHub/politsentiment_data/out/tweets_18_24.rda")
 
-tweets %>%
-  filter(!partei == "Die Grünen") -> tweets
-
 # Set Color
-col <- c("deepskyblue1", "black", "darkorchid2","gold", "red2")
+col <- c("deepskyblue1", "black","limegreen", "darkorchid2","gold", "red2")
 names(col) <- levels(tweets$partei)
 ```
 
@@ -154,12 +47,6 @@ rt$sender <- substr(rt$text, 5, regexpr(':', rt$text) - 1)
 
 # Extract the retweets
 orig <-  tweets[which(tweets$isretweet==FALSE),]
-```
-
-Zeitraum: 
-
-```{r, echo=FALSE}
-htmlTable(max(tweets$date),min(tweets$date), "bis","von","Zeitraum")
 ```
 
 Anzahl gesamter Tweets:
@@ -203,7 +90,7 @@ el <- as.data.frame(cbind(sender = tolower(rt$sender),
 el <- count(el, sender, receiver) 
 
 el %>% 
-  filter(n > 8) %>%
+  filter(n > 6) %>%
   filter(nchar(as.character(sender)) > 0) %>%
   filter(nchar(as.character(receiver)) > 0) -> el
 
@@ -212,7 +99,7 @@ rtnet <- network(el, directed = TRUE, matrix.type = 'edgelist',
 
 # Get names of only those who were retweeted to keep labeling reasonable
 vlabs <- rtnet %v% 'vertex.names'
-vlabs[degree(rtnet, cmode = 'outdegree') < 6] = NA
+vlabs[degree(rtnet, cmode = 'outdegree') < 5] = NA
 
 par(mar = c(0, 0, 3, 0))
 plot(rtnet, label = vlabs, label.col = "blue",
@@ -231,7 +118,7 @@ orig %>%
   distinct(text, .keep_all = TRUE) %>%
   arrange(desc(retweet_count)) %>%
   select(name, text, retweet_count) %>%
-  head() %>%
+  top_n(10) %>%
   htmlTable(align = "l")
 ```
 ## 3. Über welche Partei wird am meisten getweeted?
@@ -248,7 +135,7 @@ orig %>%
   ggplot(aes(reorder(partei,n), (n/nrow(orig)))) +
   xlab("") +
   ylab("%Anteil der Tweets") +
-  geom_col(fill = c("darkorchid2","gold","red2","black","deepskyblue1"), alpha = .8) +
+  geom_col(fill = c("darkorchid2","limegreen", "gold","red2","black","deepskyblue1"), alpha = .8) +
   coord_flip()
 ```
 
@@ -297,7 +184,7 @@ news %>%
   ggplot(aes(reorder(partei,n), (n/nrow(news)))) +
   xlab("") +
   ylab("%Anteil der Tweets") +
-  geom_col(fill = c("darkorchid2","gold","red2", "black", "deepskyblue1"), alpha = .8) +
+  geom_col(fill = c("darkorchid2","limegreen", "gold","black","red2", "deepskyblue1"), alpha = .8) +
   coord_flip()
 ```
 
@@ -315,7 +202,7 @@ user %>%
   ggplot(aes(reorder(partei,n), (n/nrow(user)))) +
   xlab("") +
   ylab("%Anteil der Tweets") +
-  geom_col(fill = c("darkorchid2","gold", "red2","black", "deepskyblue1"), alpha = .8) +
+  geom_col(fill = c("darkorchid2","limegreen", "gold","red2","black", "deepskyblue1"), alpha = .8) +
   coord_flip()
 ```
 
@@ -329,7 +216,7 @@ library(wordcloud)
 cdu <- news[which(news$partei=="CDU"),]
 spd <- news[which(news$partei=="SPD"),]
 fdp <- news[which(news$partei=="FDP"),]
-#gruene <- news[which(news$partei=="Die Grünen"),]
+gruene <- news[which(news$partei=="Die Grünen"),]
 linke <- news[which(news$partei=="DIE LINKE"),]
 afd <- news[which(news$partei=="AfD"),]
 
@@ -337,17 +224,19 @@ afd <- news[which(news$partei=="AfD"),]
 cdu <- paste(cdu$text_cleaned, collapse = " ")
 spd <- paste(spd$text_cleaned, collapse = " ")
 fdp <- paste(fdp$text_cleaned, collapse = " ")
-#gruene <- paste(gruene$text_cleaned, collapse = " ")
+gruene <- paste(gruene$text_cleaned, collapse = " ")
 linke <- paste(linke$text_cleaned, collapse = " ")
 afd <- paste(afd$text_cleaned, collapse = " ")
 
 # put everything in a single vector
-all <- c(cdu, spd, fdp, linke, afd)
+all <- c(cdu, spd, fdp, gruene, linke, afd)
+
+ignore <- paste(c("cdu","bündnis", "spd","fdp","gruene","grüne","grünen", "linke","dielinke","afd","gen","merkel","schulz","csu","union"), collapse = "|")
+all <- gsub(ignore,"", all)
 
 # Step 2: Corpus and term-docs_cleaned matrix ####
 # create corpus
 corp <- Corpus(VectorSource(all))
-corp <- tm_map(corp, removeWords, c("cdu","spd","fdp","gruene","grüne","linke","dielinke","afd","gen"))
 
 # create term-docs_cleaned matrix
 tdm <- TermDocumentMatrix(corp)
@@ -356,10 +245,10 @@ tdm <- TermDocumentMatrix(corp)
 tdm <- as.matrix(tdm)
 
 # add column names
-colnames(tdm) <- c("CDU","SPD","FDP", "DIE LINKE","AfD")
+colnames(tdm) <- c("CDU","SPD","FDP","Die Grünen", "DIE LINKE","AfD")
 
 # Step 3: Plot comparison wordcloud ####
-comparison.cloud(tdm, random.order=FALSE, colors = c("black","red2", "gold", "darkorchid2","deepskyblue1"), scale=c(3,.5),
+comparison.cloud(tdm, random.order=FALSE, colors = c("black","red2", "gold","limegreen", "darkorchid2","deepskyblue1"), scale=c(3,.5),
                  title.size=1.2, max.words=150)
 ```
 
@@ -371,7 +260,7 @@ library(wordcloud)
 cdu <- user[which(user$partei=="CDU"),]
 spd <- user[which(user$partei=="SPD"),]
 fdp <- user[which(user$partei=="FDP"),]
-#gruene <- user[which(user$partei=="Die Grünen"),]
+gruene <- user[which(user$partei=="Die Grünen"),]
 linke <- user[which(user$partei=="DIE LINKE"),]
 afd <- user[which(user$partei=="AfD"),]
 
@@ -379,17 +268,19 @@ afd <- user[which(user$partei=="AfD"),]
 cdu <- paste(cdu$text_cleaned, collapse = " ")
 spd <- paste(spd$text_cleaned, collapse = " ")
 fdp <- paste(fdp$text_cleaned, collapse = " ")
-#gruene <- paste(gruene$text_cleaned, collapse = " ")
+gruene <- paste(gruene$text_cleaned, collapse = " ")
 linke <- paste(linke$text_cleaned, collapse = " ")
 afd <- paste(afd$text_cleaned, collapse = " ")
 
 # put everything in a single vector
-all <- c(cdu, spd, fdp, linke, afd)
+all <- c(cdu, spd, fdp,gruene, linke, afd)
+
+ignore <- paste(c("cdu","bündnis", "spd","fdp","gruene","grüne","grünen", "linke","dielinke","afd","gen","merkel","lindner","schulz","csu","union"), collapse = "|")
+all <- gsub(ignore,"", all)
 
 # Step 2: Corpus and term-docs_cleaned matrix ####
 # create corpus
 corp <- Corpus(VectorSource(all))
-corp <- tm_map(corp, removeWords, c("cdu","spd","fdp","gruene","grüne","linke","dielinke","afd"))
 
 # create term-docs_cleaned matrix
 tdm <- TermDocumentMatrix(corp)
@@ -398,10 +289,10 @@ tdm <- TermDocumentMatrix(corp)
 tdm <- as.matrix(tdm)
 
 # add column names
-colnames(tdm) <- c("CDU","SPD","FDP", "DIE LINKE","AfD")
+colnames(tdm) <- c("CDU","SPD","FDP","Die Grünen", "DIE LINKE","AfD")
 
 # Step 3: Plot comparison wordcloud ####
-comparison.cloud(tdm, random.order=FALSE, colors = c("black","red2", "gold","darkorchid2","deepskyblue1"),
+comparison.cloud(tdm, random.order=FALSE, colors = c("black","red2", "gold","limegreen", "darkorchid2","deepskyblue1"),
                  scale=c(3,.5), title.size=1.2, max.words=150)
 ```
 
@@ -430,7 +321,7 @@ news.token <- news %>%
 ### Nachrichtendienste
 
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
-ignore <- c("cdu","spd","fdp")
+ignore <- c("cdu","spd","fdp","linke","linken","dielinke","gruene", "grüne","grünen", "merkel","schulz","lindner","union")
 
 plot_tweets <- news.token %>%
   arrange(desc(tf_idf)) %>%
@@ -438,18 +329,19 @@ plot_tweets <- news.token %>%
 
 plot_tweets %>% 
   filter(!word %in% ignore) %>%
-  top_n(4) %>%
+  top_n(7) %>%
   ggplot(aes(reorder(word, tf_idf), tf_idf, fill = partei)) +
-  geom_col(alpha=.9) +
+  geom_col(alpha = .9, show.legend = FALSE) +
   scale_fill_manual(name="", values=col) +
   labs(x = NULL, y = "tf-idf") +
+  facet_wrap(~partei, ncol = 2, scales = "free") +
   coord_flip()
 ```
 
 #### Andere User-Accounts
 
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
-ignore <- c("cdu","spd","fdp")
+ignore <- c("cdu","spd","fdp","linke","linken","dielinke","gruene", "grüne","grünen", "merkel","schulz","lindner","union")
 
 plot_tweets <- user.token %>%
   arrange(desc(tf_idf)) %>%
@@ -457,11 +349,12 @@ plot_tweets <- user.token %>%
 
 plot_tweets %>% 
   filter(!word %in% ignore) %>%
-  top_n(5) %>%
+  top_n(7) %>%
   ggplot(aes(reorder(word, tf_idf), tf_idf, fill = partei)) +
-  geom_col(alpha = .9) +
+  geom_col(alpha = .9, show.legend = FALSE) +
   scale_fill_manual(name="", values=col) +
   labs(x = NULL, y = "tf-idf") +
+  facet_wrap(~partei, ncol = 2, scales = "free") +
   coord_flip()
 ```
 
@@ -529,11 +422,12 @@ plot_sentiments <- negative_sentiments %>%
   mutate(word = factor(word, levels = rev(unique(word))))
 
 plot_sentiments %>% 
-  top_n(6) %>%
+  top_n(10) %>%
   ggplot(aes(reorder(word, count), count, fill = partei)) +
-  geom_col(alpha = .8) +
+  geom_col(alpha = .8, show.legend = FALSE) +
   scale_fill_manual(values=col) +
   labs(x = NULL, y = "negative term count") +
+  facet_wrap(~partei, ncol = 2, scales = "free") +
   coord_flip()
 ```
 
@@ -549,9 +443,10 @@ plot_sentiments <- positive_sentiments %>%
 plot_sentiments %>% 
   top_n(6) %>%
   ggplot(aes(reorder(word, count), count, fill = partei)) +
-  geom_col(alpha = .9) +
+  geom_col(alpha = .9, show.legend = FALSE) +
   scale_fill_manual(values=col) +
   labs(x = NULL, y = "positive term count") +
+  facet_wrap(~partei, ncol = 2, scales = "free") +
   coord_flip()
 ```
 
@@ -568,9 +463,11 @@ news.token %>%
   summarise(Sentimentwert = sum(Wert, na.rm = TRUE)) %>%
   ggplot(aes(reorder(partei,Sentimentwert), Sentimentwert)) +
           xlab("") +
-           geom_col(fill = c("black","darkorchid2", "gold","deepskyblue1","red2"), alpha = .8) 
+           geom_col(fill = c("black","gold","darkorchid2", "deepskyblue1","limegreen","red2"), alpha = .8) 
 
 ```
+
+#### Was sind die Tweets mit den negativsten Werten?
 
 #### Was sind die Tweets mit den negativsten Werten?
 
@@ -585,11 +482,31 @@ news.token %>%
   htmlTable(align="l")
 ```
 
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+news.token %>%
+  filter(partei == "CDU") %>%
+  arrange(desc(Wert)) %>%
+  top_n(1) %>%
+  select(text, Wert) %>%
+  head() %>%
+  htmlTable(align="l")
+```
+
 ##### SPD
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
 news.token %>%
   filter(partei == "SPD") %>%
   arrange(Wert) %>%
+  top_n(1) %>%
+  select(text, Wert) %>%
+  head() %>%
+  htmlTable(align="l")
+```
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+news.token %>%
+  filter(partei == "SPD") %>%
+  arrange(desc(Wert)) %>%
   top_n(1) %>%
   select(text, Wert) %>%
   head() %>%
@@ -608,11 +525,34 @@ news.token %>%
   htmlTable(align="l")
 ```
 
-##### DIE LINKE
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
 news.token %>%
-  filter(partei == "DIE LINKE") %>%
+  filter(partei == "FDP") %>%
+  filter(!word == "kämpfen") %>%
+  arrange(desc(Wert)) %>%
+  top_n(1) %>%
+  select(text, Wert) %>%
+  head() %>%
+  htmlTable(align="l")
+```
+
+##### Die Grünen
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+news.token %>%
+  filter(partei == "Die Grünen") %>%
+  filter(!word == "kämpfen") %>%
   arrange(Wert) %>%
+  top_n(1) %>%
+  select(text, Wert) %>%
+  head() %>%
+  htmlTable(align="l")
+```
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+news.token %>%
+  filter(partei == "Die Grünen") %>%
+  filter(!word == "kämpfen") %>%
+  arrange(desc(Wert)) %>%
   top_n(1) %>%
   select(text, Wert) %>%
   head() %>%
@@ -624,6 +564,16 @@ news.token %>%
 news.token %>%
   filter(partei == "AfD") %>%
   arrange(Wert) %>%
+  top_n(1) %>%
+  select(text, Wert) %>%
+  head() %>%
+  htmlTable(align="l")
+```
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+news.token %>%
+  filter(partei == "AfD") %>%
+  arrange(desc(Wert)) %>%
   top_n(1) %>%
   select(text, Wert) %>%
   head() %>%
@@ -673,11 +623,12 @@ plot_sentiments <- negative_sentiments %>%
   mutate(word = factor(word, levels = rev(unique(word))))
 
 plot_sentiments %>% 
-  top_n(10) %>%
+  top_n(6) %>%
   ggplot(aes(reorder(word, count), count, fill = partei)) +
-  geom_col(alpha = .9) +
+  geom_col(alpha = .9, show.legend = FALSE) +
   scale_fill_manual(name = "", values=col) +
   labs(x = NULL, y = "negative term count") +
+    facet_wrap(~partei, ncol = 2, scales = "free") +
   coord_flip()
 ```
 
@@ -691,11 +642,12 @@ plot_sentiments <- positive_sentiments %>%
   mutate(word = factor(word, levels = rev(unique(word))))
 
 plot_sentiments %>% 
-  top_n(15) %>%
+  top_n(6) %>%
   ggplot(aes(reorder(word, count), count, fill = partei)) +
-  geom_col(alpha=.9) +
+  geom_col(alpha=.9, show.legend = FALSE) +
   scale_fill_manual(name="",values=col) +
   labs(x = NULL, y = "positive term count") +
+    facet_wrap(~partei, ncol = 2, scales = "free") +
   coord_flip()
 ```
 
@@ -712,7 +664,7 @@ user.token %>%
   summarise(Sentimentwert = sum(Wert, na.rm = TRUE)) %>%
   ggplot(aes(reorder(partei,Sentimentwert), Sentimentwert)) +
           xlab("") +
-           geom_col(fill = c("deepskyblue1","black","red2","gold","darkorchid2"),alpha=.8) 
+           geom_col(fill = c("deepskyblue1","black", "red2","gold","limegreen","darkorchid2"),alpha=.8) 
 ```
 
 #### Was sind die Tweets mit den negativsten Werten?
@@ -722,6 +674,16 @@ user.token %>%
 user.token %>%
   filter(partei == "CDU") %>%
   arrange(Wert) %>%
+  top_n(1) %>%
+  select(text, Wert) %>%
+  head() %>%
+  htmlTable(align="l")
+```
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+user.token %>%
+  filter(partei == "CDU") %>%
+  arrange(desc(Wert)) %>%
   top_n(1) %>%
   select(text, Wert) %>%
   head() %>%
@@ -739,9 +701,19 @@ user.token %>%
   htmlTable(align="l")
 ```
 
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+user.token %>%
+  filter(partei == "SPD") %>%
+  arrange(desc(Wert)) %>%
+  top_n(1) %>%
+  select(text, Wert) %>%
+  head() %>%
+  htmlTable(align="l")
+```
+
 ##### FDP
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
-news.token %>%
+user.token %>%
   filter(partei == "FDP") %>%
   filter(!word == "kämpfen") %>%
   arrange(Wert) %>%
@@ -751,11 +723,34 @@ news.token %>%
   htmlTable(align="l")
 ```
 
-##### DIE LINKE
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
-news.token %>%
-  filter(partei == "DIE LINKE") %>%
+user.token %>%
+  filter(partei == "FDP") %>%
+  filter(!word == "kämpfen") %>%
+  arrange(desc(Wert)) %>%
+  top_n(1) %>%
+  select(text, Wert) %>%
+  head() %>%
+  htmlTable(align="l")
+```
+
+##### Die Grünen
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+user.token %>%
+  filter(partei == "Die Grünen") %>%
+  filter(!word == "kämpfen") %>%
   arrange(Wert) %>%
+  top_n(1) %>%
+  select(text, Wert) %>%
+  head() %>%
+  htmlTable(align="l")
+```
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+user.token %>%
+  filter(partei == "Die Grünen") %>%
+  filter(!word == "kämpfen") %>%
+  arrange(desc(Wert)) %>%
   top_n(1) %>%
   select(text, Wert) %>%
   head() %>%
@@ -764,9 +759,19 @@ news.token %>%
 
 ##### AfD
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
-news.token %>%
+user.token %>%
   filter(partei == "AfD") %>%
   arrange(Wert) %>%
+  top_n(1) %>%
+  select(text, Wert) %>%
+  head() %>%
+  htmlTable(align="l")
+```
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+user.token %>%
+  filter(partei == "AfD") %>%
+  arrange(desc(Wert)) %>%
   top_n(1) %>%
   select(text, Wert) %>%
   head() %>%
