@@ -28,6 +28,12 @@ col <- c("deepskyblue1", "black","limegreen", "darkorchid2","gold", "red2")
 names(col) <- levels(tweets$partei)
 ```
 
+```{r, include=FALSE}
+tweets %>%
+  filter(!grepl("funeralhall", text_cleaned)) -> tweets
+```
+
+
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
 # get the tweets that are retweeted 
 tweets$isretweet <- ifelse(grepl('^RT', tweets$text),TRUE,FALSE)
@@ -44,16 +50,14 @@ rt$sender <- substr(rt$text, 5, regexpr(':', rt$text) - 1)
 orig <-  tweets[which(tweets$isretweet==FALSE),]
 ```
 
-Anzahl gesamter Tweets:
-
-```{r, echo=FALSE}
-htmlTable(nrow(tweets))
-```
-
 #### Anzahl der gesamten Tweets nach Datum
 
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
-ggplot(tweets, aes(date, fill = partei)) + 
+tweets$day <- as.numeric(tweets$day)
+
+tweets %>%
+  filter(day > 6) %>%
+  ggplot(aes(date, fill = partei)) + 
     geom_histogram(alpha = .7, adjust = .25, binwidth = 500) +
     scale_fill_manual(values = col) +
     xlab("") +
@@ -113,10 +117,16 @@ orig %>%
   distinct(text, .keep_all = TRUE) %>%
   arrange(desc(retweet_count)) %>%
   select(name, text, retweet_count) %>%
-  head() %>%
+  top_n(10) %>%
   htmlTable(align = "l")
 ```
 ## 3. Über welche Partei wird am meisten getweeted?
+
+Anzahl gesamter Tweets:
+
+```{r, echo=FALSE}
+htmlTable(nrow(tweets))
+```
 
 ```{r, echo=FALSE}
 orig %>%
@@ -174,7 +184,7 @@ news %>%
   ggplot(aes(reorder(partei,n), (n/nrow(news)))) +
   xlab("") +
   ylab("%Anteil der Tweets") +
-  geom_col(fill = c("darkorchid2","gold","limegreen", "red2", "black", "deepskyblue1"), alpha = .8) +
+  geom_col(fill = c("darkorchid2","gold","limegreen", "red2", "deepskyblue1", "black"), alpha = .8) +
   coord_flip()
 ```
 
@@ -284,10 +294,6 @@ comparison.cloud(tdm, random.order=FALSE, colors = c("black","red2", "gold","lim
                  scale=c(3,.5), title.size=1.2, max.words=100)
 ```
 
-```{r, eval=FALSE, include=FALSE}
-tweets$text[grepl("fedidwgugl",tweets$text_cleaned)]
-```
-
 
 ## 5. term frequency - inverse document frequency (tf-idf)
 ```{r, include=FALSE}
@@ -309,7 +315,7 @@ news.token <- news %>%
 ### Nachrichtendienste
 
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
-ignore <- c("cdu","spd","fdp")
+ignore <- c("cdu","bündnis", "spd","fdp","gruene","grüne","grünen", "linke","dielinke","afd","gen","merkel","schulz","csu","union","unions")
 
 plot_tweets <- news.token %>%
   arrange(desc(tf_idf)) %>%
@@ -329,8 +335,6 @@ plot_tweets %>%
 #### Andere User-Accounts
 
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
-ignore <- c("merkel","schulz", "cdu","spd","fdp","grüne","grünen","linke", "dielinke", "union")
-
 plot_tweets <- user.token %>%
   arrange(desc(tf_idf)) %>%
   mutate(word = factor(word, levels = rev(unique(word))))
@@ -345,6 +349,11 @@ plot_tweets %>%
       facet_wrap(~partei, ncol = 2, scales = "free") +
   coord_flip()
 ```
+
+```{r, eval=FALSE, include=FALSE}
+orig$text[grepl("pilz", orig$text_cleaned)]
+```
+
 
 ## 6. Sentiment Analyse
 

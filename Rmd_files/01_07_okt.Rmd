@@ -221,10 +221,11 @@ afd <- paste(afd$text_cleaned, collapse = " ")
 # put everything in a single vector
 all <- c(cdu, spd, fdp,gruene, afd)
 
+ignore <- paste(c("cdu","bündnis", "spd","fdp","gruene","grüne","grünen", "linke","dielinke","afd","gen","merkel","schulz","csu","union"), collapse = "|")
+all <- gsub(ignore,"", all)
 # Step 2: Corpus and term-docs_cleaned matrix ####
 # create corpus
 corp <- Corpus(VectorSource(all))
-corp <- tm_map(corp, removeWords, c("cdu","spd","fdp","gruene","grüne","grünen", "linke","dielinke","afd","gen","merkel","schulz","csu","union"))
 
 # create term-docs_cleaned matrix
 tdm <- TermDocumentMatrix(corp)
@@ -263,10 +264,12 @@ afd <- paste(afd$text_cleaned, collapse = " ")
 # put everything in a single vector
 all <- c(cdu, spd, fdp,gruene, afd)
 
+ignore <- paste(c("cdu","bündnis", "spd","fdp","gruene","grüne","grünen", "linke","dielinke","afd","gen","merkel","schulz","csu","union"), collapse = "|")
+all <- gsub(ignore,"", all)
+
 # Step 2: Corpus and term-docs_cleaned matrix ####
 # create corpus
 corp <- Corpus(VectorSource(all))
-corp <- tm_map(corp, removeWords, c("cdu","spd","fdp","gruene","grüne","grünen", "linke","dielinke","afd","merkel","schulz","csu","union"))
 
 # create term-docs_cleaned matrix
 tdm <- TermDocumentMatrix(corp)
