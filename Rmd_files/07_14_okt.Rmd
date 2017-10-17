@@ -1,5 +1,5 @@
 ---
-title: "Politische Stimmung im Social Web nach der Bundestagswahl 2017"
+title: "Politische Stimmung im Social Web"
 #author: "Franziska Löw"
 date: "`r format(Sys.Date())`"
 output: github_document
@@ -220,11 +220,12 @@ afd <- paste(afd$text_cleaned, collapse = " ")
 
 # put everything in a single vector
 all <- c(cdu, spd, fdp, gruene, afd)
+ignore <- paste(c("cdu","bündnis", "spd","fdp","gruene","grüne","grünen", "linke","dielinke","afd","gen","merkel","schulz","csu","union"), collapse = "|")
+all <- gsub(ignore,"", all)
 
 # Step 2: Corpus and term-docs_cleaned matrix ####
 # create corpus
 corp <- Corpus(VectorSource(all))
-corp <- tm_map(corp, removeWords, c("cdu","spd","fdp","grünen","grüne","linke","dielinke","afd","gen","merkel","schulz","csu","union"))
 
 # create term-docs_cleaned matrix
 tdm <- TermDocumentMatrix(corp)
@@ -262,11 +263,12 @@ afd <- paste(afd$text_cleaned, collapse = " ")
 
 # put everything in a single vector
 all <- c(cdu, spd, fdp, gruene, afd)
+ignore <- paste(c("cdu","bündnis", "spd","fdp","gruene","grüne","grünen", "linke","dielinke","afd","gen","merkel","schulz","csu","union"), collapse = "|")
+all <- gsub(ignore,"", all)
 
 # Step 2: Corpus and term-docs_cleaned matrix ####
 # create corpus
 corp <- Corpus(VectorSource(all))
-corp <- tm_map(corp, removeWords, c("cdu","spd","fdp","grünen","grüne","linke","dielinke","afd","merkel","schulz","csu","union"))
 
 # create term-docs_cleaned matrix
 tdm <- TermDocumentMatrix(corp)
@@ -317,9 +319,10 @@ plot_tweets %>%
   filter(!word %in% ignore) %>%
   top_n(4) %>%
   ggplot(aes(reorder(word, tf_idf), tf_idf, fill = partei)) +
-  geom_col(alpha=.9) +
+  geom_col(alpha=.9, show.legend = FALSE) +
   scale_fill_manual(name="", values=col) +
   labs(x = NULL, y = "tf-idf") +
+      facet_wrap(~partei, ncol = 2, scales = "free") +
   coord_flip()
 ```
 
@@ -336,9 +339,10 @@ plot_tweets %>%
   filter(!word %in% ignore) %>%
   top_n(5) %>%
   ggplot(aes(reorder(word, tf_idf), tf_idf, fill = partei)) +
-  geom_col(alpha = .9) +
+  geom_col(alpha = .9, show.legend = FALSE) +
   scale_fill_manual(name="", values=col) +
   labs(x = NULL, y = "tf-idf") +
+      facet_wrap(~partei, ncol = 2, scales = "free") +
   coord_flip()
 ```
 
@@ -408,9 +412,10 @@ plot_sentiments <- negative_sentiments %>%
 plot_sentiments %>% 
   top_n(6) %>%
   ggplot(aes(reorder(word, count), count, fill = partei)) +
-  geom_col(alpha = .8) +
+  geom_col(alpha = .8, show.legend = FALSE) +
   scale_fill_manual(values=c("deepskyblue1","black","limegreen", "gold","red2")) +
   labs(x = NULL, y = "negative term count") +
+      facet_wrap(~partei, ncol = 2, scales = "free") +
   coord_flip()
 ```
 
@@ -426,9 +431,10 @@ plot_sentiments <- positive_sentiments %>%
 plot_sentiments %>% 
   top_n(6) %>%
   ggplot(aes(reorder(word, count), count, fill = partei)) +
-  geom_col(alpha = .9) +
+  geom_col(alpha = .9, show.legend = FALSE) +
   scale_fill_manual(values=c("deepskyblue1","black","limegreen", "darkorchid2","gold","red2")) +
   labs(x = NULL, y = "positive term count") +
+      facet_wrap(~partei, ncol = 2, scales = "free") +
   coord_flip()
 ```
 
@@ -579,9 +585,10 @@ plot_sentiments <- negative_sentiments %>%
 plot_sentiments %>% 
   top_n(5) %>%
   ggplot(aes(reorder(word, count), count, fill = partei)) +
-  geom_col(alpha = .9) +
+  geom_col(alpha = .9, show.legend = FALSE) +
   scale_fill_manual(name = "", values=col) +
   labs(x = NULL, y = "negative term count") +
+        facet_wrap(~partei, ncol = 2, scales = "free") +
   coord_flip()
 ```
 
@@ -597,9 +604,10 @@ plot_sentiments <- positive_sentiments %>%
 plot_sentiments %>% 
   top_n(10) %>%
   ggplot(aes(reorder(word, count), count, fill = partei)) +
-  geom_col(alpha=.9) +
+  geom_col(alpha=.9, show.legend = FALSE) +
   scale_fill_manual(name="",values=col) +
   labs(x = NULL, y = "positive term count") +
+        facet_wrap(~partei, ncol = 2, scales = "free") +
   coord_flip()
 ```
 
