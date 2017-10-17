@@ -1,6 +1,6 @@
 Was wurde am Wahltag getwittert?
 ================
-2017-10-09
+2017-10-17
 
 Erläuterungen zu den einzelnen Analyseschritten finden Sie [hier](https://franziloew.github.io/politsentiment/)
 
@@ -121,17 +121,73 @@ Frauke Petry
 </td>
 </tr>
 <tr>
-<td style="border-bottom: 2px solid grey; text-align: left;">
+<td style="text-align: left;">
 6
 </td>
-<td style="border-bottom: 2px solid grey; text-align: left;">
+<td style="text-align: left;">
 ZDF heute
 </td>
-<td style="border-bottom: 2px solid grey; text-align: left;">
+<td style="text-align: left;">
 Ströbele empfiehlt, nicht jeden "Furz der AfD" wochenlang zu kommentieren \#btw17 <https://t.co/6ul8l9MQZO>
 </td>
-<td style="border-bottom: 2px solid grey; text-align: left;">
+<td style="text-align: left;">
 1366
+</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+7
+</td>
+<td style="text-align: left;">
+ZDF heute-show
+</td>
+<td style="text-align: left;">
+Prognose: 89 Mandate für die AfD. 88 wäre aber auch zu schön gewesen. \#BTW17
+</td>
+<td style="text-align: left;">
+1194
+</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+8
+</td>
+<td style="text-align: left;">
+Dr. Alice Weidel
+</td>
+<td style="text-align: left;">
+Von 💙mein tiefer Dank an alle \#AfD|ler, die durch Einsatz, Mut und Leidenschaft dieses großartige \#Btw17 -Ergebnis… <https://t.co/v8W0G2ldid>
+</td>
+<td style="text-align: left;">
+1173
+</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+9
+</td>
+<td style="text-align: left;">
+tagesschau
+</td>
+<td style="text-align: left;">
+Charlotte Knobloch, nennt das starke Abschneiden der AfD bei der Bundestagswahl einen "wahr gewordenen Alptraum".… <https://t.co/as6CZntrkF>
+</td>
+<td style="text-align: left;">
+974
+</td>
+</tr>
+<tr>
+<td style="border-bottom: 2px solid grey; text-align: left;">
+10
+</td>
+<td style="border-bottom: 2px solid grey; text-align: left;">
+tagesschau
+</td>
+<td style="border-bottom: 2px solid grey; text-align: left;">
+Starke Verluste für die Union, die SPD weiter schwach, AfD dritte Kraft. \#btw17 <https://t.co/lkY9GU3U4m>
+</td>
+<td style="border-bottom: 2px solid grey; text-align: left;">
+942
 </td>
 </tr>
 </tbody>
@@ -145,23 +201,12 @@ Anzahlt gesamte Tweets: <!--html_preserve-->
 <tbody>
 <tr style="border-top: 2px solid grey;">
 <td style="border-top: 2px solid grey; border-bottom: 2px solid grey; text-align: center;">
-150825
+163792
 </td>
 </tr>
 </tbody>
 </table>
 <!--/html_preserve-->
-``` r
-orig %>%
-  group_by(partei) %>%
-  tally(sort = TRUE)%>%
-  ggplot(aes(reorder(partei,n), (n/nrow(orig)))) +
-  xlab("") +
-  ylab("%Anteil der Tweets") +
-  geom_col(fill = c("darkorchid2","gold","black","red2", "deepskyblue1"), alpha = .8) +
-  coord_flip()
-```
-
 ![](election_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-9-1.png)
 
 #### Nachrichtendienste
@@ -171,7 +216,7 @@ Anzahlt gesamte Tweets: <!--html_preserve-->
 <tbody>
 <tr style="border-top: 2px solid grey;">
 <td style="border-top: 2px solid grey; border-bottom: 2px solid grey; text-align: center;">
-604
+615
 </td>
 </tr>
 </tbody>
@@ -186,7 +231,7 @@ Anzahlt gesamte Tweets: <!--html_preserve-->
 <tbody>
 <tr style="border-top: 2px solid grey;">
 <td style="border-top: 2px solid grey; border-bottom: 2px solid grey; text-align: center;">
-68071
+69198
 </td>
 </tr>
 </tbody>
@@ -205,16 +250,22 @@ Anzahlt gesamte Tweets: <!--html_preserve-->
 
 ![](election_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-16-1.png)
 
+``` r
+unique(tweets$lang)
+```
+
+    ## [1] "de"
+
 5. term frequency - inverse document frequency (tf-idf)
 -------------------------------------------------------
 
 ### Nachrichtendienste
 
-![](election_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-18-1.png)
+![](election_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-19-1.png)
 
 ### Andere User-Accounts
 
-![](election_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-19-1.png)
+![](election_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-20-1.png)
 
 6. Sentiment Analyse
 --------------------
@@ -223,15 +274,15 @@ Anzahlt gesamte Tweets: <!--html_preserve-->
 
 ##### Anzahl negativer Sentiment-Wörter
 
-![](election_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-22-1.png)
+![](election_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-23-1.png)
 
 ##### Anzahl positiver Sentiment-Wörter
 
-![](election_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-23-1.png)
+![](election_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-24-1.png)
 
 #### Gewichtete Analyse
 
-![](election_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-24-1.png)
+![](election_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-25-1.png)
 
 #### Was sind die Tweets mit den negativsten/positivsten Werten?
 
@@ -1257,15 +1308,15 @@ Wahlparty der AfD in Berlin - drinnen wird gefeiert, draußen demonstriert. Auch
 
 ##### Anzahl negativer Sentiment-Wörter
 
-![](election_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-34-1.png)
+![](election_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-35-1.png)
 
 ##### Anzahl positiver Sentiment-Wörter
 
-![](election_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-35-1.png)
+![](election_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-36-1.png)
 
 #### Gewichtete Analyse
 
-![](election_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-36-1.png)
+![](election_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-37-1.png)
 
 #### Was sind die Tweets mit den negativsten/positivsten Werten?
 
