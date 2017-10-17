@@ -12,6 +12,8 @@ Alle Rmd Files (R-Code) sind [hier](https://github.com/franziloew/politsentiment
 
 # A) Analysen
 
+##### Oktober I [07.Oktober - 14.Oktober](07_14_okt.md)
+
 ##### Digitalisierung [26.September - 07.Oktober](01_07_10.md)
 
 ### Bundestagswahl 2017
