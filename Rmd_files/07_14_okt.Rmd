@@ -7,6 +7,8 @@ output: github_document
 
 ### 07.Oktober 2017 - 15.Oktober 2017
 
+Die Wähler haben sich entschieden. Jetzt ist es an den Parteien sich in der neuen Regierungskonstellation zu positionieren. Welche Themen werden in diesem Zusammenhang besonders diskutiert auf Twitter? Wir haben nachgeguckt. 
+
 Erläuterungen zu den einzelnen Analyseschritten finden Sie [hier](https://franziloew.github.io/politsentiment/)
 
 Den R-Code finden Sie hier [hier](https://github.com/franziloew/politsentiment/tree/master/Rmd_files)
@@ -335,6 +337,8 @@ plot_tweets %>%
 #### Andere User-Accounts
 
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
+ignore <- c("cdu","bündnis", "spd","fdp","gruene","grüne","grünen", "linke","dielinke","afd","gen","merkel","merkels","cducsu","schulz","csu","union","unions")
+
 plot_tweets <- user.token %>%
   arrange(desc(tf_idf)) %>%
   mutate(word = factor(word, levels = rev(unique(word))))
