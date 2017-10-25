@@ -1,0 +1,102 @@
+---
+title: "01.10.2017 - 07.10.2017"
+#author: "Franziska Löw"
+date: "`r format(Sys.Date())`"
+output: github_document
+---
+
+```{r, include=FALSE}
+# load the packages
+libs <- c("tidytext","tidyr","readr","lubridate","tm","stm","data.table",
+          "plyr","dplyr","class","knitr","kableExtra","cldr",'network', 'sna', 'qdap',
+          "htmlTable","ggplot2","gridExtra","jsonlite","stringr","scales")
+lapply(libs, library, character.only = TRUE)
+```
+
+```{r, include=FALSE}
+rm(list=ls())
+
+theme_set(new = theme_bw())
+set.seed(95616)
+
+# load the dataframe
+tweets <- read.csv("../../politsentiment_data/data/tweets_bundestag.csv")
+
+# delete duplicates
+tweets <- distinct(tweets, keep_all=TRUE)
+
+# Format the time Variable
+tweets$day <- substr(tweets$date,9,10)
+tweets$time <- substr(tweets$date, 12,19)
+tweets$date <- paste(tweets$day,10,2017,tweets$time)
+tweets$date <- as.POSIXct(tweets$date, format ="%d %m %Y %H:%M:%S")
+tweets$date <- tweets$date + hours(2)
+```
+
+```{r, include=FALSE}
+tweets$platform <- substr(tweets$source, regexpr('>', tweets$source) + 1, 
+       regexpr('</', tweets$source) -1)
+
+tweets %>%
+  group_by(platform) %>%
+  tally(sort = TRUE) %>%
+  top_n(19) -> platform_reduced
+
+platform_reduced <- as.vector(platform_reduced$platform)
+
+tweets$platform_reduced <- ifelse(tweets$platform %in% platform_reduced, tweets$platform, "Other")
+```
+
+```{r, include=FALSE}
+# Delete accounts that has been withheld
+tweets <- tweets[!grepl("account has been withheld", tweets$text),]
+tweets <- tweets[!grepl("Politisch", tweets$location),]
+
+tweets <- tweets[which(tweets$lang == "de"),]
+```
+
+```{r, eval=FALSE, include=FALSE}
+clean.text = function(x)
+{
+  x = tolower(x)
+  x = gsub(" ?(f|ht)(tp)(s?)(://)(.*)[.|/](.*)", " ", x)
+  x = gsub("&amp", " ", x)
+  x = gsub("(RT|via)((?:\\b\\W*@\\w+)+)", "", x)
+  x = gsub("@\\w+", " ", x)
+  x = gsub("[ \t]{2,}", "", x)
+  x = gsub("^\\s+|\\s+$", "", x) 
+  x = gsub( "[^[:alnum:]]", " ", x)
+  x = gsub( "[[:digit:]]", " ", x)
+  return(x)
+}
+
+# apply function to the "orig" dataframe
+tweets$text_cleaned <- clean.text(tweets$text)
+
+# remove just new-line tag from plain-tex for better readability
+tweets$text_cleaned <- gsub("[\r\n]", "", tweets$text_cleaned)
+
+# get stopwords from online dict and add costum stopwords
+# exceptions   <- c("nicht")
+# my_stopwords <- setdiff(stopwords("german"), exceptions)
+my_stopwords <- c(stopwords("german"), 'rt','https','t','amp','dass','beim','co','via',"live","video","uhr")
+
+# Remove stopwords
+tweets$text_cleaned<- removeWords(tweets$text_cleaned, my_stopwords)
+```
+
+
+```{r, eval=FALSE, include=FALSE}
+# Create boolean for party
+
+tweets$partei <- ifelse(grepl(paste(c("cdu","merkel","union"), collapse = "|"), tweets$text_cleaned),"CDU", "None")
+tweets$partei <- ifelse(grepl(paste(c("spd","schulz"),collapse = "|"), tweets$text_cleaned),"SPD",tweets$partei)
+tweets$partei <- ifelse(grepl(paste(c("fdp","lindner"), collapse = "|"), tweets$text_cleaned),"FDP",tweets$partei)
+tweets$partei <- ifelse(grepl(paste(c("gruene","grüne","ozdemir","bündnis"), collapse = "|"), tweets$text_cleaned),"Die Grünen",tweets$partei)
+tweets$partei <- ifelse(grepl(paste(c("linke","wagenknecht"),collapse = "|"), tweets$text_cleaned),"DIE LINKE", tweets$partei)
+tweets$partei <- ifelse(grepl(paste(c("afd","gauland"),collapse = "|"), tweets$text_cleaned),"AfD", tweets$partei)
+```
+
+```{r}
+save(tweets, file = "../../politsentiment_data/out/tweets_bundestag.Rda")
+```
