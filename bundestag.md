@@ -12,13 +12,13 @@ Weitere Erläuterungen zu den einzelnen Analyseschritten finden Sie [hier](https
 
 ![](bundestag_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-3-1.png)
 
-1. Von welchen Plattformen werden die meisten Tweets gesendet?
---------------------------------------------------------------
+Von welchen Plattformen werden die meisten Tweets gesendet?
+-----------------------------------------------------------
 
 ![](bundestag_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-5-1.png)
 
-2. Wer retweeted wen?
----------------------
+Wer retweeted wen?
+------------------
 
 ![](bundestag_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-6-1.png)
 
@@ -187,8 +187,8 @@ Wahl der Bundestags-Vizepräsidenten: \#AfD-Kandidat \#Glaser fällt durch. \#Bu
 </tbody>
 </table>
 <!--/html_preserve-->
-3. Über welche Partei wird am meisten getweeted?
-------------------------------------------------
+Über welche Partei wird am meisten getweeted?
+---------------------------------------------
 
 Anzahlt gesamte Tweets (ohne Retweets): <!--html_preserve-->
 <table class="gmisc_table" style="border-collapse: collapse; margin-top: 1em; margin-bottom: 1em;">
@@ -218,41 +218,46 @@ Anzahlt gesamte Tweets (ohne Retweets): <!--html_preserve-->
 <!--/html_preserve-->
 ![](bundestag_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-12-1.png)
 
-4. term frequency
------------------
+Term frequency
+--------------
 
-### 4.1 Wordclouds
+### Wordclouds
 
 ![](bundestag_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-13-1.png)
 
+### Wordcloud (Tweets ohne Partei-Nennung)
+
 ![](bundestag_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-14-1.png)
 
-### 4.2 inverse document frequency (tf-idf)
+### inverse document frequency (tf-idf)
 
-![](bundestag_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-16-1.png) \#\#\# 4.3 Bigrams
+![](bundestag_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-16-1.png)
+
+### Bigrams
+
+Welche zwei Wörter tauchen am häufigsten gemeinsam auf?
 
 ![](bundestag_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-18-1.png)
 
-6. Sentiment Analyse
---------------------
+Sentiment Analyse
+-----------------
 
-#### Nachrichtenportale
-
-##### Anzahl negativer Sentiment-Wörter
+#### Anzahl negativer Sentiment-Wörter
 
 ![](bundestag_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-21-1.png)
 
-##### Anzahl positiver Sentiment-Wörter
+#### Anzahl positiver Sentiment-Wörter
 
 ![](bundestag_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-22-1.png)
 
-#### Gewichtete Analyse
+### Gewichtete Analyse
 
 ![](bundestag_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-23-1.png)
 
-#### Was sind die Tweets mit den negativsten/positivsten Werten?
+Was sind die Tweets mit den negativsten/positivsten Werten?
+-----------------------------------------------------------
 
-#### CDU
+### CDU
 
 <!--html_preserve-->
 <table class="gmisc_table" style="border-collapse: collapse; margin-top: 1em; margin-bottom: 1em;">
@@ -475,7 +480,7 @@ Die \#Grünen helfen der Union jetzt schon beim Merkel Schutz vor der Opposition
 </tbody>
 </table>
 <!--/html_preserve-->
-#### SPD
+### SPD
 
 <!--html_preserve-->
 <table class="gmisc_table" style="border-collapse: collapse; margin-top: 1em; margin-bottom: 1em;">
@@ -695,7 +700,7 @@ SPD-Forderung nach Fragestunde mit Bundeskanzlerin ist super. Der \#Bundestag mu
 </tbody>
 </table>
 <!--/html_preserve-->
-#### FDP
+### FDP
 
 <!--html_preserve-->
 <table class="gmisc_table" style="border-collapse: collapse; margin-top: 1em; margin-bottom: 1em;">
@@ -915,7 +920,7 @@ CDU, FDP, GRÜNE und Linke stimmen gegen AfD-Antrag. AfD und SPD stimmen dafür.
 </tbody>
 </table>
 <!--/html_preserve-->
-#### AfD
+### AfD
 
 <!--html_preserve-->
 <table class="gmisc_table" style="border-collapse: collapse; margin-top: 1em; margin-bottom: 1em;">
@@ -1140,7 +1145,7 @@ Ich finde es fantastisch, dass die \#AfD sich in ihrer Opferrolle einfindet. Her
 </tbody>
 </table>
 <!--/html_preserve-->
-#### Die Grünen
+### Die Grünen
 
 <!--html_preserve-->
 <table class="gmisc_table" style="border-collapse: collapse; margin-top: 1em; margin-bottom: 1em;">
@@ -1360,7 +1365,7 @@ gut
 </tbody>
 </table>
 <!--/html_preserve-->
-#### DIE LINKE
+### DIE LINKE
 
 <!--html_preserve-->
 <table class="gmisc_table" style="border-collapse: collapse; margin-top: 1em; margin-bottom: 1em;">
@@ -1580,7 +1585,7 @@ Es redet,ja wer redet den da von der FDP eigentlich?Naja egal,jedenfalls bekommt
 </tbody>
 </table>
 <!--/html_preserve-->
-#### Keine konkrete Partei-Nennung
+### Tweets ohne explizite Partei-Nennung
 
 <!--html_preserve-->
 <table class="gmisc_table" style="border-collapse: collapse; margin-top: 1em; margin-bottom: 1em;">
