@@ -55,7 +55,7 @@ rt$sender <- substr(rt$text, 5, regexpr(':', rt$text) - 1)
 orig <-  tweets[which(tweets$isretweet==FALSE),]
 ```
 
-## 1. Von welchen Plattformen werden die meisten Tweets gesendet?
+## Von welchen Plattformen werden die meisten Tweets gesendet?
 
 ```{r, echo=FALSE, message=FALSE}
 tweets %>%
@@ -68,7 +68,7 @@ tweets %>%
   coord_flip() 
 ```
 
-## 2. Wer retweeted wen?
+## Wer retweeted wen?
 
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
 col3 = RColorBrewer::brewer.pal(3, 'Paired')
@@ -108,7 +108,7 @@ orig %>%
   htmlTable(align = "l")
 ```
 
-## 3. Über welche Partei wird am meisten getweeted?
+## Über welche Partei wird am meisten getweeted?
 
 Anzahlt gesamte Tweets (ohne Retweets):
 ```{r, echo=FALSE}
@@ -155,9 +155,9 @@ orig %>%
   coord_flip()
 ```
 
-## 4. term frequency
+## Term frequency
 
-### 4.1 Wordclouds
+### Wordclouds
 
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
 library(wordcloud)
@@ -202,6 +202,8 @@ comparison.cloud(tdm, random.order=FALSE, colors = c("black","red2", "gold","lim
                  title.size=1.2, max.words=150)
 ```
 
+
+### Wordcloud (Tweets ohne Partei-Nennung)
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
 # get text
 none <- orig[which(orig$partei=="None"),]
@@ -230,7 +232,7 @@ wordcloud(ap.d$word,ap.d$freq, scale=c(8,.2),min.freq=5,
 max.words=Inf, random.order=FALSE, rot.per=.15, colors=pal2)
 ```
 
-### 4.2 inverse document frequency (tf-idf)
+### inverse document frequency (tf-idf)
  
 ```{r, include=FALSE}
 token <- orig %>%
@@ -258,7 +260,9 @@ plot_tweets %>%
       facet_wrap(~partei, ncol = 2, scales = "free") +
   coord_flip()
 ```
-### 4.3 Bigrams
+
+### Bigrams
+Welche zwei Wörter tauchen am häufigsten gemeinsam auf?
 ```{r, include=FALSE}
 ignore <- c("afd", "bundestag", "cdu","spd","fdp","linke","linken","dielinke","gruene", "grüne","grünen", "merkel","schulz","lindner","union","wagenknecht")
 
@@ -290,7 +294,7 @@ plot_tweets %>%
   coord_flip()
 ```
 
-## 6. Sentiment Analyse
+## Sentiment Analyse
 
 ```{r, message=FALSE, warning=FALSE, include=FALSE}
 # Load dictionaries (from: http://wortschatz.uni-leipzig.de/de/download)
@@ -317,8 +321,6 @@ sentiment_df %>%
   rename(word = Wort) -> sentiment_df
 ```
 
-
-#### Nachrichtenportale
 ```{r, message=FALSE, warning=FALSE, include=FALSE}
 token <- orig %>%
   unnest_tokens(word, text_cleaned)
@@ -345,7 +347,7 @@ token %>%
   dplyr::select(word, count) -> positive_sentiments
 ```
 
-##### Anzahl negativer Sentiment-Wörter
+#### Anzahl negativer Sentiment-Wörter
 
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
 plot_sentiments <- negative_sentiments %>%
@@ -363,7 +365,7 @@ plot_sentiments %>%
   coord_flip()
 ```
 
-##### Anzahl positiver Sentiment-Wörter
+#### Anzahl positiver Sentiment-Wörter
 
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
 plot_sentiments <- positive_sentiments %>%
@@ -382,7 +384,7 @@ plot_sentiments %>%
   coord_flip()
 ```
 
-#### Gewichtete Analyse
+### Gewichtete Analyse
 
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
 token %>% 
@@ -399,9 +401,9 @@ token %>%
 
 ```
 
-#### Was sind die Tweets mit den negativsten/positivsten Werten?
+## Was sind die Tweets mit den negativsten/positivsten Werten?
 
-#### CDU
+### CDU
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
 token %>%
   filter(partei == "CDU") %>%
@@ -422,7 +424,7 @@ token %>%
   htmlTable(align="l")
 ```
 
-#### SPD
+### SPD
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
 token %>%
   filter(partei == "SPD") %>%
@@ -443,7 +445,7 @@ token %>%
   htmlTable(align="l")
 ```
 
-#### FDP
+### FDP
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
 token %>%
   filter(partei == "FDP") %>%
@@ -464,7 +466,7 @@ token %>%
   htmlTable(align="l")
 ```
 
-#### AfD
+### AfD
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
 token %>%
   filter(partei == "AfD") %>%
@@ -485,7 +487,7 @@ token %>%
   htmlTable(align="l")
 ```
 
-#### Die Grünen
+### Die Grünen
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
 token %>%
   filter(partei == "Die Grünen") %>%
@@ -506,7 +508,7 @@ token %>%
   htmlTable(align="l")
 ```
 
-#### DIE LINKE
+### DIE LINKE
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
 token %>%
   filter(partei == "DIE LINKE") %>%
@@ -526,7 +528,7 @@ token %>%
   .[1:5,] %>%
   htmlTable(align="l")
 ```
-#### Keine konkrete Partei-Nennung
+### Tweets ohne explizite Partei-Nennung
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
 token %>%
   filter(partei == "None") %>%

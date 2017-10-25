@@ -14,23 +14,23 @@ Alle Rmd Files (R-Code) sind [hier](https://github.com/franziloew/politsentiment
 
 #### 19.Bundestag [24.Oktober](bundestag.md)
 
-##### Oktober I [07.Oktober - 14.Oktober](07_14_okt.md)
+#### Oktober I [07.Oktober - 14.Oktober](07_14_okt.md)
 
-##### Digitalisierung [26.September - 14.Oktober](01_07_10.md)
+#### Digitalisierung [26.September - 14.Oktober](01_07_10.md)
 
 ### Bundestagswahl 2017
 
-##### Nach der Wahl II [01.Oktober - 07.Oktober](01_07_okt.md)
+#### Nach der Wahl II [01.Oktober - 07.Oktober](01_07_okt.md)
 
-##### Nach der Wahl I [26.September - 29.September](25_30.md)
+#### Nach der Wahl I [26.September - 29.September](25_30.md)
 
-##### Wahltag [24.September](election.md)
+#### Wahltag [24.September](election.md)
 
-##### Vor der Wahl II [18.September - 23.September](18_23_09.md)
+#### Vor der Wahl II [18.September - 23.September](18_23_09.md)
 
-##### Vor der Wahl I [08.September - 15.September](17_09.md)
+#### Vor der Wahl I [08.September - 15.September](17_09.md)
 
-##### TV Duell [09. September](TVDuell.md)
+#### TV Duell [09. September](TVDuell.md)
 
 # B) Analyse-Schritte
 
@@ -56,13 +56,12 @@ Wir unterscheiden zwischen:
   b) Anderer User - Accounts.
   Um die Tweets zu betrachten, die nicht von den großen privaten und öffentlichen Nachrichtendiensten gesendet wurde, werden alle Tweets gefiltert, die nicht von diesen Nachrichtenportalen und die nicht von automatisierten Bots gesendet wurden.
 
-### 4. Wordclouds
+### 4. Term - Häufigkeit
+#### 4.1. Wordclouds
 Welche Wörter werden am häufigsten in Verbindung mit den Parteien getweetet? Zur Visualisierung der am häufigsten verwendeten Wörter in Bezug auf eine Partei, erstellen wir eine Wordcloud.
 
-Da für einige Datensätze nur eine vergleichsweise geringe Anzahl an Tweets zu den Parteien Bündnis 90/Die Grünen und DIE LINKE vorliegen, werden diese nicht bei allen Wordclouds mit einbezogen um so die Übersichtlichkeit zu erhalten.
 
-### 5. term frequency - inverse document frequency (tf-idf)
-
+#### 4.2 term frequency - inverse document frequency (tf-idf)
 Die Idee des tf-idf Wertes (aus dem englischen "term frequency - inverse document frequency") ist es, die Relevanz eines Wortes für den Inhalt eines Dokumentes (in diesem Fall einer Partei) zu finden - und zwar im Vergleich zu allen im Korpus enthaltenen Dokumente (bzw. Parteien).
 
 TF(t) = (Anzahl von Term t pro Patei) / (Anzahl aller Terme pro Partei)
@@ -71,7 +70,7 @@ IDF(t) = log\_e(Anzahl aller Parteien / Anzahl von Parteien, die den Term t enth
 
 In den folgenden Abbildungen, sind die Wörter (sog. unique terms) mit den höchsten tf-idf Werten pro Partei aufgelistet. Diese Wörter werden sind also im Zusammenhang einer Partei am "relevantesten".
 
-### 6. Sentiment Analyse
+### 5. Sentiment Analyse
 
 Mittels der Sentimentanalyse versucht man, Stimmungen zu analysieren um zu erkennen, ob ein Tweet eine positive oder negative Stimmung oder Meinung ausdrückt.
 

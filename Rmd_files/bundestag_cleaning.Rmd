@@ -88,13 +88,29 @@ tweets$text_cleaned<- removeWords(tweets$text_cleaned, my_stopwords)
 
 ```{r, eval=FALSE, include=FALSE}
 # Create boolean for party
+cdu <- tweets[grepl(paste(c("cdu","merkel","union"), collapse = "|"), tweets$text_cleaned),]
+cdu$partei <- "CDU"
 
-tweets$partei <- ifelse(grepl(paste(c("cdu","merkel","union"), collapse = "|"), tweets$text_cleaned),"CDU", "None")
-tweets$partei <- ifelse(grepl(paste(c("spd","schulz"),collapse = "|"), tweets$text_cleaned),"SPD",tweets$partei)
-tweets$partei <- ifelse(grepl(paste(c("fdp","lindner"), collapse = "|"), tweets$text_cleaned),"FDP",tweets$partei)
-tweets$partei <- ifelse(grepl(paste(c("gruene","grüne","ozdemir","bündnis"), collapse = "|"), tweets$text_cleaned),"Die Grünen",tweets$partei)
-tweets$partei <- ifelse(grepl(paste(c("linke","wagenknecht"),collapse = "|"), tweets$text_cleaned),"DIE LINKE", tweets$partei)
-tweets$partei <- ifelse(grepl(paste(c("afd","gauland"),collapse = "|"), tweets$text_cleaned),"AfD", tweets$partei)
+spd <- tweets[grepl(paste(c("spd","schulz"),collapse = "|"), tweets$text_cleaned), ]
+spd$partei <- "SPD"
+
+fdp <- tweets[grepl(paste(c("fdp","lindner"), collapse = "|"), tweets$text_cleaned),]
+fdp$partei <- "FDP"
+
+gruene <- tweets[grepl(paste(c("gruene","grüne","ozdemir","bündnis"), collapse = "|"), tweets$text_cleaned),]
+gruene$partei <- "Die Grünen"
+
+linke <- tweets[grepl(paste(c("linke","wagenknecht"),collapse = "|"), tweets$text_cleaned),]
+linke$partei <- "DIE LINKE"
+
+afd <- tweets[grepl(paste(c("afd","gauland"),collapse = "|"), tweets$text_cleaned),]
+afd$partei <- "AfD"
+
+tweets %>%
+  filter(!grepl(paste(c("cdu","merkel","union","spd","schulz","fdp","lindner","gruene","grüne","ozdemir","bündnis","linke","wagenknecht","afd","gauland"), collapse = "|"), tweets$text_cleaned)) ->none
+none$partei <- "None"
+
+tweets <- rbind(cdu,spd,fdp,gruene,linke,afd, none)
 ```
 
 ```{r}
