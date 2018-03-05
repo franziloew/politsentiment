@@ -12,6 +12,8 @@ Alle Rmd Files (R-Code) sind [hier](https://github.com/franziloew/politsentiment
 
 # A) Analysen
 
+#### SPD Mitgliedervotum zur Groko [05.März 2008](https://franziloew.github.io/politsentiment/SPD_mitgliedervotum.html)
+
 #### Sentimentanalys Jamaika-Aus [24.November](https://franziloew.github.io/politsentiment/sentimentR.html)
 
 #### 19.Bundestag [24.Oktober](bundestag.md)

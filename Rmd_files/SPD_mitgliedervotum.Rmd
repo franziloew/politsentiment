@@ -1,0 +1,289 @@
+---
+title: "Politische Stimmung im Social Web"
+#author: "Franziska Löw"
+date: "`r format(Sys.Date())`"
+output: 
+  html_document:
+    theme: "lumen"
+    highlight: "tango"
+    code_folding: show
+    self_contained: true
+---
+
+```{r include=FALSE}
+# load the packages
+libs <- c("tidytext","tidyr","readr","lubridate","tm","botornot","rtweet",
+          "plyr","dplyr","class","knitr",'network','sna', "twitteR",
+          "htmlTable","ggplot2","gridExtra","stringr","scales")
+lapply(libs, library, character.only = TRUE)
+
+# Theming
+quartzFonts(
+  Roboto =
+    c("Roboto-Light",
+      "Roboto-Bold",
+      "Roboto-Regular",
+      "Roboto-Thin")
+)
+
+theme_set(
+  theme_bw(base_family = "Roboto", base_size = 10) +
+    theme(
+      plot.title = element_text(size = 14,
+                                margin = margin(0, 0, 4, 0, "pt")),
+      plot.subtitle = element_text(size = 8),
+      plot.caption = element_text(size = 6),
+      plot.background   = element_rect("#fafafa", "#fafafa"),
+      panel.background  = element_rect("#fafafa"),
+      panel.border = element_blank()
+    )
+)
+
+rm(list=ls())
+col <- RColorBrewer::brewer.pal(6,"Dark2")
+```
+
+```{r eval=FALSE, include=FALSE}
+consumer_key <- 'FJHiSxWJAJlOHuRY4hgfjPdt9'
+consumer_secret <- 'nMq8c2iNX9wqxzuFgGnsOqskimWeT0VCBJ7aRQcFIqoS2OK883'
+access_token <- '2994024412-IMprLDKulBUoZieUyaA8QbZixV1pHqDxvrVXtPf'
+access_secret <- 'QBHRBRGPDmkd1PfWEyX1rVgNihJmGp6qaSgEMHuz9mDEg'
+
+setup_twitter_oauth(consumer_key, consumer_secret, access_token, access_secret)
+```
+
+```{r eval=FALSE, include=FALSE}
+groko <- searchTwitter("groko", n=18000, lang = "de",
+                       since = "2018-03-02",
+                       until = "2018-03-06")
+
+groko_df <- twListToDF(groko)
+
+save(groko_df, file = "groko.Rda")
+```
+
+### 03.März 2018 - 05.März 2018 (SPD Mitgliedervotum)
+
+Knapp 160 Tage nach der Bundestagswahl ist klar: Es wird erneut eine Große Koalition zwischen der Union und der SPD geben. Nachdem sich die Mitglieder der SPD mit 66% für eine erneute Koalition mit der Union entschieden haben, kann endlich eine Regierung gebildet werden. 
+
+Wir sind die Reaktionen auf diese Entscheidung? Wir haben nachgeguckt. Mit Hilfe der Twitter-API haben wir alle Tweets aus dem Zeitraum 03.März 2018 - 05.März 2018 gesammelt die das Wort "Groko" enthalten. 
+
+Erläuterungen zu den einzelnen Analyseschritten finden Sie [hier](https://franziloew.github.io/politsentiment/)
+
+Den R-Code finden Sie hier [hier](https://github.com/franziloew/politsentiment/tree/master/Rmd_files)
+
+```{r include=FALSE}
+load(file = "groko.Rda")
+```
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+# Extract the retweets
+groko_df %>%
+  filter(isRetweet == TRUE) -> rt
+
+# Extract the retweets
+groko_df %>%
+  filter(isRetweet == FALSE) -> orig
+```
+
+#### Anzahl der gesamten Tweets nach Datum
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+groko_df %>%
+  ggplot(aes(created)) + 
+    geom_histogram(fill = col[3],
+                   alpha = .9, 
+                   adjust = .25, binwidth = 500) +
+    xlab("") +
+    ylab("Anzahl der Tweets") +
+    scale_x_datetime(breaks = date_breaks("4 hours"), labels=date_format("%a, %d.%m\n%H:%M", tz="CET"))
+```
+
+## 2. Wer retweeted wen? 
+
+```{r echo=FALSE, fig.height=10, fig.width=10}
+rt$sender <- substr(rt$text, 5, regexpr(':', rt$text) - 1)
+
+# Adjust retweets to create an edgelist for network
+el <- as.data.frame(cbind(sender = tolower(rt$sender), 
+                         receiver = tolower(rt$screenName)))
+el <- count(el, sender, receiver) 
+
+el %>% 
+  filter(n > 1) %>%
+  filter(nchar(as.character(sender)) > 0) %>%
+  filter(nchar(as.character(receiver)) > 0) -> el
+
+rtnet <- network(el, directed = TRUE, matrix.type = 'edgelist',
+                ignore.eval = FALSE, names.eval = 'num')
+
+# Get names of only those who were retweeted to keep labeling reasonable
+vlabs <- rtnet %v% 'vertex.names'
+vlabs[degree(rtnet, cmode = 'outdegree') < 0.5] = NA
+
+plot(rtnet, label = vlabs, label.col = "grey5",
+     label.pos = 5, label.cex = .9, 
+     vertex.cex = log(degree(rtnet)) + .5, vertex.col = col[2],
+     edge.lwd = 'num', edge.col = col[3], main = '')
+```
+
+### Welche der Tweets wurden am häufigsten Retweeted?
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+orig %>%
+  arrange(desc(retweetCount)) %>%
+  select(screenName, text, retweetCount) %>%
+  top_n(10) %>%
+  htmlTable(align = "l")
+```
+
+## Text cleaning
+
+```{r message=FALSE}
+clean.text = function(x)
+{
+  x = gsub(" ?(f|ht)(tp)(s?)(://)(.*)[.|/](.*)", " ", x)
+  x = gsub("&amp", " ", x)
+  x = gsub("(RT|via)((?:\\b\\W*@\\w+)+)", "", x)
+  x = gsub("@\\w+", " ", x)
+  x = gsub("[ \t]{2,}", "", x)
+  x = gsub("^\\s+|\\s+$", "", x) 
+  x = gsub( "[^[:alnum:]]", " ", x)
+  x = gsub( "[[:digit:]]", " ", x)
+  x = tolower(x)
+  return(x)
+}
+
+# apply function to the "orig" dataframe
+groko_df$text_cleaned <- clean.text(groko_df$text)
+groko_df$text_cleaned <- removeWords(groko_df$text_cleaned, stopwords("de"))
+
+groko_df %>%
+  select(text, text_cleaned) %>%
+  top_n(5) %>%
+  htmlTable(align="l")
+```
+
+## term frequency 
+```{r}
+tweet_words <- groko_df %>% select(id, text_cleaned) %>% 
+  unnest_tokens(word,text_cleaned) 
+```
+
+```{r echo=FALSE, fig.height=8, fig.width=6, message=FALSE, warning=FALSE}
+tweet_words %>% 
+  count(word, sort = T) %>%
+  top_n(25) %>%
+  ggplot(aes(reorder(word, n), n)) +
+  geom_col(fill = col[3], 
+           alpha=.9) +
+  labs(x = NULL, y = "Count") +
+  coord_flip()
+```
+
+## Sentiment Analyse
+
+```{r}
+sent <- c(
+  # positive Wörter
+  readLines("../dict/SentiWS_v1.8c_Negative.txt",
+            encoding = "UTF-8"),
+  # negative Wörter
+  readLines("../dict/SentiWS_v1.8c_Positive.txt",
+            encoding = "UTF-8")
+) %>% lapply(function(x) {
+  # Extrahieren der einzelnen Spalten
+  res <- strsplit(x, "\t", fixed = TRUE)[[1]]
+  return(data.frame(words = res[1], value = res[2],
+                    stringsAsFactors = FALSE))
+}) %>%
+  bind_rows %>% 
+  mutate(word = gsub("\\|.*", "", words) %>% tolower,
+         value = as.numeric(value)) %>% 
+  # manche Wörter kommen doppelt vor, hier nehmen wir den mittleren Wert
+  group_by(word) %>% summarise(value = mean(value)) %>% ungroup
+```
+
+```{r}
+# Combine with sentiment values
+sentDF <- left_join(tweet_words, sent, by="word") %>% 
+  mutate(polarity = ifelse(value < 0, "negative", "NA"),
+         polarity = ifelse(value > 0, "positive", polarity))
+```
+
+#### Top 10: Positive Wörter
+
+```{r}
+sentDF %>%
+  filter(!is.na(value)) %>%
+  select(- id) %>%
+  distinct(word, .keep_all = T) %>%
+  top_n(10, value) %>%
+  htmlTable(align = "l")
+```
+
+#### Top 10: Negative Wörter
+
+```{r}
+sentDF %>%
+  filter(!is.na(value)) %>%
+  select(- id) %>%
+  distinct(word, .keep_all = T) %>%
+  top_n(10, desc(value)) %>%
+  htmlTable(align = "l")
+```
+
+#### Anteil positiver / negativer Wörter 
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+sentDF %>% 
+  filter(!is.na(value)) %>%
+  group_by(polarity) %>%
+  tally() %>%
+  mutate(share = n/nrow(sentDF)) %>%
+  ggplot(aes(polarity, share)) +
+  geom_col(fill = col[5]) +
+  labs(x = NULL, y = "share") 
+```
+
+#### Gewichtete Analyse
+
+Es gibt zwar insgesamt weniger negative Wörter, dafür fallen diese stärker ins Gewicht. 
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+sentDF %>%
+  filter(!is.na(value)) %>%
+  group_by(polarity) %>%
+  summarise(value = mean(value)) %>%
+  ggplot(aes(polarity, value,
+             label = round(value,2))) +
+  geom_col(fill = col[3]) +
+  geom_text(color = "grey10") +
+  labs(x = NULL, y = "Weighted polarity")
+```
+
+#### Was sind die Tweets mit den negativsten/positivsten Werten?
+
+```{r}
+sentDF %>%
+  group_by(id) %>%
+  summarise(value = mean(value, na.rm = T)) %>%
+  left_join(.,groko_df, by="id") -> groko_df
+```
+
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+groko_df %>%
+  select(text, value) %>%
+  distinct(text, .keep_all = T) %>%
+  top_n(10, desc(value)) %>%
+  htmlTable(align="l")
+```
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+groko_df %>%
+  select(text, value) %>%
+  distinct(text, .keep_all = T) %>%
+  top_n(10, value) %>%
+  htmlTable(align="l")
+```

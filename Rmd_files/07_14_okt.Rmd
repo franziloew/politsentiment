@@ -15,8 +15,8 @@ Den R-Code finden Sie hier [hier](https://github.com/franziloew/politsentiment/t
 
 ```{r, include=FALSE}
 # load the packages
-libs <- c("feather", "tidytext","tidyr","readr","lubridate","tm","stm",
-          "plyr","dplyr","class","knitr","kableExtra","cldr",'network', 'sna', 'qdap',
+libs <- c("tidytext","tidyr","readr","lubridate","tm","stm",
+          "plyr","dplyr","class","knitr",'network', 'sna',
           "htmlTable","ggplot2","gridExtra","jsonlite","stringr","scales")
 lapply(libs, library, character.only = TRUE)
 ```
