@@ -44,11 +44,6 @@ col <- RColorBrewer::brewer.pal(6,"Dark2")
 ```
 
 ```{r eval=FALSE, include=FALSE}
-consumer_key <- 'FJHiSxWJAJlOHuRY4hgfjPdt9'
-consumer_secret <- 'nMq8c2iNX9wqxzuFgGnsOqskimWeT0VCBJ7aRQcFIqoS2OK883'
-access_token <- '2994024412-IMprLDKulBUoZieUyaA8QbZixV1pHqDxvrVXtPf'
-access_secret <- 'QBHRBRGPDmkd1PfWEyX1rVgNihJmGp6qaSgEMHuz9mDEg'
-
 setup_twitter_oauth(consumer_key, consumer_secret, access_token, access_secret)
 ```
 
