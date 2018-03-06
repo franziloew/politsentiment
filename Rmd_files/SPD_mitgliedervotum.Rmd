@@ -43,21 +43,7 @@ rm(list=ls())
 col <- RColorBrewer::brewer.pal(6,"Dark2")
 ```
 
-```{r eval=FALSE, include=FALSE}
-setup_twitter_oauth(consumer_key, consumer_secret, access_token, access_secret)
-```
-
-```{r eval=FALSE, include=FALSE}
-groko <- searchTwitter("groko", n=18000, lang = "de",
-                       since = "2018-03-02",
-                       until = "2018-03-06")
-
-groko_df <- twListToDF(groko)
-
-save(groko_df, file = "groko.Rda")
-```
-
-### 03.März 2018 - 05.März 2018 (SPD Mitgliedervotum)
+## 03.März 2018 - 05.März 2018 (SPD Mitgliedervotum)
 
 Knapp 160 Tage nach der Bundestagswahl ist klar: Es wird erneut eine Große Koalition zwischen der Union und der SPD geben. Nachdem sich die Mitglieder der SPD mit 66% für eine erneute Koalition mit der Union entschieden haben, kann endlich eine Regierung gebildet werden. 
 
@@ -130,6 +116,30 @@ orig %>%
   select(screenName, text, retweetCount) %>%
   top_n(10) %>%
   htmlTable(align = "l")
+```
+
+### Bot or not?
+
+Das R-Packet [botornot](https://github.com/mkearney/botornot) verwendet ML zur Klassifizierung von Twitter Accounts (Bot or not?) 
+
+Ich groupiere alle Tweets nach Account und verwende dann die 100 Accounts mit den meisten Tweets um zu überprüfen, ob es sich um einen Bot handelt.
+
+```{r eval=FALSE, include=FALSE}
+groko_df %>% 
+  group_by(screenName) %>%
+  tally(sort = T) %>%
+  top_n(100) -> users
+
+data <- botornot(users$screenName)
+```
+
+```{r}
+ggplot(data, aes(prob_bot)) +
+  geom_density(fill=col[3], alpha = 0.8,
+               color = col[3]) +
+  labs(x="", y="",
+       title = "Density Plot / Bot Probability",
+       subtitle = "Testing 100 Accounts most presented in Data") 
 ```
 
 ## Text cleaning
