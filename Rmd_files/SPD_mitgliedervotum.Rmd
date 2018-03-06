@@ -139,7 +139,7 @@ ggplot(data, aes(prob_bot)) +
                color = col[3]) +
   labs(x="", y="",
        title = "Density Plot / Bot Probability",
-       subtitle = "Testing 100 Accounts most presented in Data") 
+       subtitle = "Testing 100 Accounts mostly presented in Data") 
 ```
 
 ## Text cleaning
